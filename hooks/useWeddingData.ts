@@ -22,7 +22,7 @@ export function useWeddingData() {
             supabase.from('events').select('*').order('order_index'),
             supabase.from('love_stories').select('*').order('order_index'),
             supabase.from('gallery').select('*').order('order_index'),
-            supabase.from('wishes').select('*').order('created_at', { ascending: false }),
+            supabase.from('wishes').select('*').order('created_at', { ascending: false }).limit(50),
             supabase.from('gift_accounts').select('*').order('order_index'),
           ])
 

@@ -6,6 +6,9 @@ interface Props {
   params: Promise<{ code: string }>
 }
 
+// Cache guest data for 60 seconds to reduce DB hits
+export const revalidate = 60
+
 export default async function InvitationPage({ params }: Props) {
   const { code } = await params
 
@@ -17,7 +20,7 @@ export default async function InvitationPage({ params }: Props) {
   // Fetch guest by invitation code from database
   const { data: guest } = await supabaseAdmin
     .from('guests')
-    .select('*')
+    .select('name, invitation_code, category')
     .eq('invitation_code', code)
     .single()
 

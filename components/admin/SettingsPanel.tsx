@@ -1046,18 +1046,71 @@ function MediaTab({
   saving: boolean
   onSave: () => void
 }) {
+  const [uploading, setUploading] = useState(false)
+
+  async function handleMusicUpload() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'audio/*'
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      setUploading(true)
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'music')
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData })
+        const data = await res.json()
+        if (res.ok && data.url) {
+          setSettings((prev) => (prev ? { ...prev, music_url: data.url } : prev))
+        }
+      } catch {
+        // ignore
+      } finally {
+        setUploading(false)
+      }
+    }
+    input.click()
+  }
+
   return (
-    <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-      <h3 className="text-lg font-semibold text-white">Media</h3>
-      <div>
-        <label className="block text-xs text-gray-400 mb-1">URL Musik Latar</label>
-        <input
-          className={inputClass}
-          value={settings.music_url || ''}
-          onChange={(e) => setSettings((prev) => (prev ? { ...prev, music_url: e.target.value } : prev))}
-          placeholder="https://example.com/music.mp3"
-        />
+    <div className="bg-netflix-dark rounded-xl p-6 space-y-6">
+      <h3 className="text-lg font-semibold text-white">Musik Latar</h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs text-gray-400 mb-2">Upload File Musik (MP3)</label>
+          <button
+            onClick={handleMusicUpload}
+            disabled={uploading}
+            className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+          >
+            {uploading ? 'Mengupload...' : 'Upload Musik'}
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Atau masukkan URL langsung</label>
+          <input
+            className={inputClass}
+            value={settings.music_url || ''}
+            onChange={(e) => setSettings((prev) => (prev ? { ...prev, music_url: e.target.value } : prev))}
+            placeholder="https://example.com/music.mp3"
+          />
+        </div>
+
+        {settings.music_url && (
+          <div className="bg-netflix-black rounded-lg p-4">
+            <p className="text-xs text-gray-400 mb-2">Preview:</p>
+            <audio controls className="w-full" src={settings.music_url}>
+              Browser tidak mendukung audio.
+            </audio>
+          </div>
+        )}
       </div>
+
       <button
         onClick={onSave}
         disabled={saving}
