@@ -308,6 +308,7 @@ function AcaraTab({
   uploadFile: (file: File) => Promise<string | null>
 }) {
   const [editing, setEditing] = useState<Event | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     title: '',
     date: '',
@@ -323,15 +324,17 @@ function AcaraTab({
   function resetForm() {
     setForm({ title: '', date: '', time_start: '', time_end: '', timezone: 'WIB', location: '', address: '', map_url: '', image_url: '' })
     setEditing(null)
+    setShowForm(false)
   }
 
   function startEdit(event: Event) {
     setEditing(event)
+    setShowForm(true)
     setForm({
       title: event.title,
       date: event.date,
-      time_start: event.time_start,
-      time_end: event.time_end,
+      time_start: event.time_start?.slice(0, 5) || '',
+      time_end: event.time_end?.slice(0, 5) || '',
       timezone: event.timezone || 'WIB',
       location: event.location,
       address: event.address,
@@ -414,82 +417,99 @@ function AcaraTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Acara' : 'Tambah Acara'}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Judul</label>
-            <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Tanggal</label>
-            <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
-            <input type="time" className={inputClass} value={form.time_start} onChange={(e) => setForm({ ...form, time_start: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Waktu Selesai</label>
-            <input type="time" className={inputClass} value={form.time_end} onChange={(e) => setForm({ ...form, time_end: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Zona Waktu</label>
-            <select className={inputClass} value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
-              <option value="WIB">WIB</option>
-              <option value="WITA">WITA</option>
-              <option value="WIT">WIT</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Lokasi</label>
-            <input className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Alamat</label>
-            <input className={inputClass} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">URL Peta</label>
-            <input className={inputClass} value={form.map_url} onChange={(e) => setForm({ ...form, map_url: e.target.value })} />
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-xs text-gray-400 mb-1">Gambar</label>
-            {form.image_url && (
-              <img src={form.image_url} alt="Event" className="w-32 h-20 rounded-lg object-cover mb-2" />
-            )}
-            <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
-              Upload Gambar
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
-            {editing ? 'Perbarui' : 'Tambah'}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Daftar Acara</h3>
+        {!showForm && (
+          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+            + Tambah Acara
           </button>
-          {editing && (
+        )}
+      </div>
+
+      {showForm && (
+        <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Acara' : 'Tambah Acara'}</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Judul</label>
+              <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Tanggal</label>
+              <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
+              <input type="time" className={inputClass} value={form.time_start} onChange={(e) => setForm({ ...form, time_start: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Waktu Selesai</label>
+              <input type="time" className={inputClass} value={form.time_end} onChange={(e) => setForm({ ...form, time_end: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Zona Waktu</label>
+              <select className={inputClass} value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
+                <option value="WIB">WIB</option>
+                <option value="WITA">WITA</option>
+                <option value="WIT">WIT</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Lokasi</label>
+              <input className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">Alamat</label>
+              <input className={inputClass} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">URL Peta</label>
+              <input className={inputClass} value={form.map_url} onChange={(e) => setForm({ ...form, map_url: e.target.value })} />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+              {form.image_url && (
+                <img src={form.image_url} alt="Event" className="w-32 h-20 rounded-lg object-cover mb-2" />
+              )}
+              <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                Upload Gambar
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+              {editing ? 'Perbarui' : 'Tambah'}
+            </button>
             <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-white">Daftar Acara</h3>
+      {/* Event Cards */}
+      <div className="space-y-4">
         {events.length === 0 ? (
-          <p className="text-gray-400 text-sm">Belum ada acara</p>
+          <p className="text-gray-400 text-sm text-center py-8">Belum ada acara</p>
         ) : (
           events.map((event) => (
-            <div key={event.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
-              <div>
-                <p className="text-white font-medium">{event.title}</p>
-                <p className="text-gray-400 text-xs">{event.date} | {event.time_start} - {event.time_end} {event.timezone}</p>
-                <p className="text-gray-400 text-xs">{event.location}</p>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => startEdit(event)} className="text-blue-400 text-sm hover:underline">Edit</button>
-                <button onClick={() => handleDelete(event.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
+            <div key={event.id} className="bg-netflix-dark rounded-xl p-4 border border-netflix-gray/20 hover:border-netflix-red/20 transition">
+              <div className="flex gap-4">
+                {event.image_url && (
+                  <img src={event.image_url} alt={event.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                )}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-netflix-red text-white text-[10px] font-bold px-2 py-0.5 rounded">{event.title}</span>
+                    <span className="text-gray-500 text-xs">{event.timezone}</span>
+                  </div>
+                  <p className="text-white font-medium text-sm">{event.date} | {event.time_start?.slice(0,5)} - {event.time_end?.slice(0,5)}</p>
+                  <p className="text-gray-400 text-xs mt-1 truncate">{event.location}{event.address ? ` - ${event.address}` : ''}</p>
+                </div>
+                <div className="flex flex-col gap-1 flex-shrink-0">
+                  <button onClick={() => startEdit(event)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                  <button onClick={() => handleDelete(event.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                </div>
               </div>
             </div>
           ))
@@ -514,6 +534,7 @@ function LoveStoryTab({
   uploadFile: (file: File) => Promise<string | null>
 }) {
   const [editing, setEditing] = useState<LoveStory | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     title: '',
     date: '',
@@ -524,10 +545,12 @@ function LoveStoryTab({
   function resetForm() {
     setForm({ title: '', date: '', description: '', image_url: '' })
     setEditing(null)
+    setShowForm(false)
   }
 
   function startEdit(story: LoveStory) {
     setEditing(story)
+    setShowForm(true)
     setForm({
       title: story.title,
       date: story.date,
@@ -610,63 +633,79 @@ function LoveStoryTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Love Story' : 'Tambah Love Story'}</h3>
-        <div className="space-y-4">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Judul</label>
-            <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Tanggal (contoh: Januari 2020)</label>
-            <input className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Deskripsi</label>
-            <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Gambar</label>
-            {form.image_url && (
-              <img src={form.image_url} alt="Love Story" className="w-32 h-20 rounded-lg object-cover mb-2" />
-            )}
-            <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
-              Upload Gambar
-            </button>
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
-            {editing ? 'Perbarui' : 'Tambah'}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Love Story</h3>
+        {!showForm && (
+          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+            + Tambah Story
           </button>
-          {editing && (
+        )}
+      </div>
+
+      {showForm && (
+        <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+          <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Love Story' : 'Tambah Love Story'}</h3>
+          <div className="space-y-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Judul</label>
+              <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Tanggal (contoh: Januari 2020)</label>
+              <input className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Deskripsi</label>
+              <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+              {form.image_url && (
+                <img src={form.image_url} alt="Love Story" className="w-32 h-20 rounded-lg object-cover mb-2" />
+              )}
+              <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+                Upload Gambar
+              </button>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+              {editing ? 'Perbarui' : 'Tambah'}
+            </button>
             <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-white">Daftar Love Story</h3>
+      {/* Love Story Cards */}
+      <div className="space-y-4">
         {loveStories.length === 0 ? (
-          <p className="text-gray-400 text-sm">Belum ada love story</p>
+          <p className="text-gray-400 text-sm text-center py-8">Belum ada love story</p>
         ) : (
-          loveStories.map((story) => (
-            <div key={story.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
-              <div className="flex items-center gap-3">
-                {story.image_url && (
-                  <img src={story.image_url} alt={story.title} className="w-12 h-12 rounded-lg object-cover" />
+          loveStories.map((story, i) => (
+            <div key={story.id} className="bg-netflix-dark rounded-xl p-4 border border-netflix-gray/20 hover:border-netflix-red/20 transition">
+              <div className="flex gap-4">
+                {story.image_url ? (
+                  <img src={story.image_url} alt={story.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                ) : (
+                  <div className="w-20 h-20 rounded-lg bg-netflix-gray/30 flex items-center justify-center flex-shrink-0">
+                    <span className="text-netflix-red font-bold text-sm">EP {i + 1}</span>
+                  </div>
                 )}
-                <div>
-                  <p className="text-white font-medium">{story.title}</p>
-                  <p className="text-gray-400 text-xs">{story.date}</p>
-                  <p className="text-gray-400 text-xs line-clamp-1">{story.description}</p>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="bg-netflix-red text-white text-[10px] font-bold px-2 py-0.5 rounded">EP {i + 1}</span>
+                    <span className="text-netflix-red text-xs font-medium">{story.date}</span>
+                  </div>
+                  <p className="text-white font-medium text-sm">{story.title}</p>
+                  <p className="text-gray-400 text-xs mt-1 line-clamp-2">{story.description}</p>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <button onClick={() => startEdit(story)} className="text-blue-400 text-sm hover:underline">Edit</button>
-                <button onClick={() => handleDelete(story.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
+                <div className="flex flex-col gap-1 flex-shrink-0">
+                  <button onClick={() => startEdit(story)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                  <button onClick={() => handleDelete(story.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                </div>
               </div>
             </div>
           ))

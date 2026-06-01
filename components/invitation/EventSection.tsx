@@ -9,12 +9,19 @@ interface Props {
 }
 
 function formatEventDate(dateStr: string) {
-  const date = new Date(dateStr)
-  const months = [
-    'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-    'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-  ]
-  return `${date.getDate()} ${months[date.getMonth()]} ${date.getFullYear()}`
+  // Handle date string like "2024-12-14" without timezone issues
+  const parts = dateStr.split('-')
+  if (parts.length === 3) {
+    const months = [
+      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
+      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
+    ]
+    const day = parseInt(parts[2], 10)
+    const monthIndex = parseInt(parts[1], 10) - 1
+    const year = parts[0]
+    return `${day} ${months[monthIndex]} ${year}`
+  }
+  return dateStr
 }
 
 function formatTime(time: string) {
@@ -57,19 +64,25 @@ export function EventSection({ events }: Props) {
             {/* Event Card */}
             <div className="flex gap-3 sm:gap-4">
               {/* Event Image */}
-              {event.image_url && (
-                <motion.div
-                  whileHover={{ scale: 1.05 }}
-                  className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg overflow-hidden relative shadow-lg"
-                >
+              <motion.div
+                whileHover={{ scale: 1.05 }}
+                className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg overflow-hidden relative shadow-lg bg-netflix-gray/30"
+              >
+                {event.image_url ? (
                   <Image
                     src={event.image_url}
                     alt={event.title}
                     fill
                     className="object-cover"
                   />
-                </motion.div>
-              )}
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg className="w-8 h-8 text-netflix-light/20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                  </div>
+                )}
+              </motion.div>
 
               {/* Event Details */}
               <div className="flex-1 min-w-0">
