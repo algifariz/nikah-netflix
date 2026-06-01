@@ -1,78 +1,55 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Settings, Event, GiftAccount, GalleryImage } from '@/types'
+import type { Settings, Event, GiftAccount, GalleryImage, LoveStory } from '@/types'
 
-type TabName = 'mempelai' | 'acara' | 'gallery' | 'amplop' | 'media'
+type Tab = 'mempelai' | 'acara' | 'lovestory' | 'gallery' | 'amplop' | 'media'
 
 const inputClass = 'w-full bg-netflix-black border border-netflix-gray/30 rounded-lg p-3 text-sm text-white focus:border-netflix-red focus:outline-none transition'
 
 export function SettingsPanel() {
-  const [activeTab, setActiveTab] = useState<TabName>('mempelai')
+  const [activeTab, setActiveTab] = useState<Tab>('mempelai')
   const [settings, setSettings] = useState<Settings | null>(null)
   const [events, setEvents] = useState<Event[]>([])
   const [giftAccounts, setGiftAccounts] = useState<GiftAccount[]>([])
   const [gallery, setGallery] = useState<GalleryImage[]>([])
+  const [loveStories, setLoveStories] = useState<LoveStory[]>([])
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState('')
 
-  // Event form state
-  const [eventForm, setEventForm] = useState<Partial<Event>>({})
-  const [editingEventId, setEditingEventId] = useState<string | null>(null)
-  const [showEventForm, setShowEventForm] = useState(false)
-
-  // Gift account form state
-  const [giftForm, setGiftForm] = useState<Partial<GiftAccount>>({ type: 'bank' })
-  const [editingGiftId, setEditingGiftId] = useState<string | null>(null)
-  const [showGiftForm, setShowGiftForm] = useState(false)
-
-  const fileInputRef = useRef<HTMLInputElement>(null)
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
-  const tabs: { key: TabName; label: string }[] = [
-    { key: 'mempelai', label: 'Mempelai' },
-    { key: 'acara', label: 'Acara' },
-    { key: 'gallery', label: 'Gallery' },
-    { key: 'amplop', label: 'Amplop' },
-    { key: 'media', label: 'Media' },
-  ]
-
   useEffect(() => {
-    fetchAllData()
-  }, [])
+    async function fetchData() {
+      try {
+        const [settingsRes, eventsRes, giftRes, galleryRes, loveRes] = await Promise.all([
+          fetch('/api/settings'),
+          fetch('/api/events'),
+          fetch('/api/gift-accounts'),
+          fetch('/api/gallery'),
+          fetch('/api/love-stories'),
+        ])
+        const settingsData = await settingsRes.json()
+        const eventsData = await eventsRes.json()
+        const giftData = await giftRes.json()
+        const galleryData = await galleryRes.json()
+        const loveData = await loveRes.json()
 
-  async function fetchAllData() {
-    setLoading(true)
-    try {
-      const [settingsRes, eventsRes, giftRes, galleryRes] = await Promise.all([
-        fetch('/api/settings'),
-        fetch('/api/events'),
-        fetch('/api/gift-accounts'),
-        fetch('/api/gallery'),
-      ])
-      if (settingsRes.ok) {
-        const data = await settingsRes.json()
-        setSettings(data)
+        if (settingsRes.ok) setSettings(settingsData)
+        if (eventsRes.ok) setEvents(eventsData)
+        if (giftRes.ok) setGiftAccounts(giftData)
+        if (galleryRes.ok) setGallery(galleryData)
+        if (loveRes.ok) setLoveStories(loveData)
+      } catch {
+        setMessage('Error memuat data')
+        setTimeout(() => setMessage(''), 5000)
+      } finally {
+        setLoading(false)
       }
-      if (eventsRes.ok) {
-        const data = await eventsRes.json()
-        setEvents(data)
-      }
-      if (giftRes.ok) {
-        const data = await giftRes.json()
-        setGiftAccounts(data)
-      }
-      if (galleryRes.ok) {
-        const data = await galleryRes.json()
-        setGallery(data)
-      }
-    } catch (err) {
-      console.error('Failed to fetch data:', err)
-    } finally {
-      setLoading(false)
     }
-  }
+    fetchData()
+  }, [])
 
   async function uploadFile(file: File): Promise<string | null> {
     const formData = new FormData()
@@ -81,24 +58,36 @@ export function SettingsPanel() {
     try {
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
-      if (res.ok && data.url) {
-        return data.url
-      }
-      // Show error to user
+      if (res.ok && data.url) return data.url
       setMessage(data.error || 'Upload gagal')
       setTimeout(() => setMessage(''), 5000)
       return null
-    } catch (err) {
-      setMessage('Upload gagal: network error')
+    } catch {
+      setMessage('Upload gagal')
       setTimeout(() => setMessage(''), 5000)
       return null
     }
   }
 
-  async function handleSaveSettings() {
+  function handlePhotoUpload(callback: (url: string) => void) {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      setSaving(true)
+      const url = await uploadFile(file)
+      if (url) callback(url)
+      setSaving(false)
+    }
+    input.click()
+  }
+
+  async function saveSettings() {
     if (!settings) return
     setSaving(true)
-    setMessage('')
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -106,743 +95,892 @@ export function SettingsPanel() {
         body: JSON.stringify(settings),
       })
       if (res.ok) {
-        setMessage('Settings saved successfully!')
+        setMessage('Berhasil disimpan')
       } else {
-        setMessage('Failed to save settings.')
+        setMessage('Error menyimpan data')
       }
     } catch {
-      setMessage('Error saving settings.')
+      setMessage('Error menyimpan data')
     } finally {
       setSaving(false)
-      setTimeout(() => setMessage(''), 3000)
+      setTimeout(() => setMessage(''), 5000)
     }
-  }
-
-  async function handlePhotoUpload(field: 'groom_photo' | 'bride_photo' | 'hero_image') {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file || !settings) return
-      const url = await uploadFile(file)
-      if (url) {
-        setSettings({ ...settings, [field]: url })
-      }
-    }
-    input.click()
-  }
-
-  // Event CRUD
-  async function handleSaveEvent() {
-    if (!eventForm.title) return
-    try {
-      if (editingEventId) {
-        const res = await fetch(`/api/events/${editingEventId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(eventForm),
-        })
-        if (res.ok) {
-          const updated = await res.json()
-          setEvents(events.map((ev) => (ev.id === editingEventId ? updated : ev)))
-        }
-      } else {
-        const res = await fetch('/api/events', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...eventForm, order_index: events.length }),
-        })
-        if (res.ok) {
-          const created = await res.json()
-          setEvents([...events, created])
-        }
-      }
-      resetEventForm()
-    } catch (err) {
-      console.error('Error saving event:', err)
-    }
-  }
-
-  async function handleDeleteEvent(id: string) {
-    if (!confirm('Delete this event?')) return
-    try {
-      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setEvents(events.filter((ev) => ev.id !== id))
-      }
-    } catch (err) {
-      console.error('Error deleting event:', err)
-    }
-  }
-
-  function resetEventForm() {
-    setEventForm({})
-    setEditingEventId(null)
-    setShowEventForm(false)
-  }
-
-  function startEditEvent(event: Event) {
-    setEventForm(event)
-    setEditingEventId(event.id)
-    setShowEventForm(true)
-  }
-
-  async function handleEventImageUpload() {
-    const input = document.createElement('input')
-    input.type = 'file'
-    input.accept = 'image/*'
-    input.onchange = async (e) => {
-      const file = (e.target as HTMLInputElement).files?.[0]
-      if (!file) return
-      const url = await uploadFile(file)
-      if (url) {
-        setEventForm({ ...eventForm, image_url: url })
-      }
-    }
-    input.click()
-  }
-
-  // Gallery CRUD
-  async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const files = e.target.files
-    if (!files) return
-    for (let i = 0; i < files.length; i++) {
-      const url = await uploadFile(files[i])
-      if (url) {
-        const res = await fetch('/api/gallery', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ image_url: url, order_index: gallery.length + i }),
-        })
-        if (res.ok) {
-          const created = await res.json()
-          setGallery((prev) => [...prev, created])
-        }
-      }
-    }
-    if (galleryInputRef.current) {
-      galleryInputRef.current.value = ''
-    }
-  }
-
-  async function handleDeleteGalleryImage(id: string) {
-    if (!confirm('Delete this image?')) return
-    try {
-      const res = await fetch(`/api/gallery?id=${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setGallery(gallery.filter((img) => img.id !== id))
-      }
-    } catch (err) {
-      console.error('Error deleting image:', err)
-    }
-  }
-
-  // Gift Account CRUD
-  async function handleSaveGift() {
-    if (!giftForm.provider_name || !giftForm.account_number || !giftForm.account_holder) return
-    try {
-      if (editingGiftId) {
-        const res = await fetch(`/api/gift-accounts/${editingGiftId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(giftForm),
-        })
-        if (res.ok) {
-          const updated = await res.json()
-          setGiftAccounts(giftAccounts.map((g) => (g.id === editingGiftId ? updated : g)))
-        }
-      } else {
-        const res = await fetch('/api/gift-accounts', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...giftForm, order_index: giftAccounts.length }),
-        })
-        if (res.ok) {
-          const created = await res.json()
-          setGiftAccounts([...giftAccounts, created])
-        }
-      }
-      resetGiftForm()
-    } catch (err) {
-      console.error('Error saving gift account:', err)
-    }
-  }
-
-  async function handleDeleteGift(id: string) {
-    if (!confirm('Delete this account?')) return
-    try {
-      const res = await fetch(`/api/gift-accounts/${id}`, { method: 'DELETE' })
-      if (res.ok) {
-        setGiftAccounts(giftAccounts.filter((g) => g.id !== id))
-      }
-    } catch (err) {
-      console.error('Error deleting gift account:', err)
-    }
-  }
-
-  function resetGiftForm() {
-    setGiftForm({ type: 'bank' })
-    setEditingGiftId(null)
-    setShowGiftForm(false)
-  }
-
-  function startEditGift(gift: GiftAccount) {
-    setGiftForm(gift)
-    setEditingGiftId(gift.id)
-    setShowGiftForm(true)
   }
 
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
-        <div className="text-netflix-light">Loading settings...</div>
+        <div className="text-white">Memuat...</div>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Tabs */}
-      <div className="flex flex-wrap gap-2 border-b border-netflix-gray/20 pb-4">
-        {tabs.map((tab) => (
-          <button
-            key={tab.key}
-            onClick={() => setActiveTab(tab.key)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
-              activeTab === tab.key
-                ? 'bg-netflix-red text-white'
-                : 'bg-netflix-dark text-netflix-light hover:bg-netflix-gray/20'
-            }`}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Message */}
       {message && (
-        <div className={`bg-netflix-dark border rounded-lg p-3 text-sm ${message.includes('gagal') || message.includes('Error') || message.includes('Pastikan') ? 'border-red-500/30 text-red-400' : 'border-netflix-gray/30 text-green-400'}`}>
+        <div
+          className={`p-4 rounded-lg text-sm font-medium ${
+            message.includes('gagal') || message.includes('Error')
+              ? 'bg-red-500/20 text-red-400'
+              : 'bg-green-500/20 text-green-400'
+          }`}
+        >
           {message}
         </div>
       )}
 
-      {/* Mempelai Tab */}
-      {activeTab === 'mempelai' && settings && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {/* Groom */}
-            <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-white">Mempelai Pria</h3>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Nama Panggilan</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.groom_name}
-                  onChange={(e) => setSettings({ ...settings, groom_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Nama Lengkap</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.groom_full_name}
-                  onChange={(e) => setSettings({ ...settings, groom_full_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Ayah</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.groom_father}
-                  onChange={(e) => setSettings({ ...settings, groom_father: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Ibu</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.groom_mother}
-                  onChange={(e) => setSettings({ ...settings, groom_mother: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Foto</label>
-                <div className="flex items-center gap-3">
-                  {settings.groom_photo && (
-                    <img src={settings.groom_photo} alt="Groom" className="w-16 h-16 rounded-full object-cover" />
-                  )}
-                  <button
-                    onClick={() => handlePhotoUpload('groom_photo')}
-                    className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                  >
-                    Upload Foto
-                  </button>
-                </div>
-              </div>
-            </div>
-
-            {/* Bride */}
-            <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-              <h3 className="text-lg font-semibold text-white">Mempelai Wanita</h3>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Nama Panggilan</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.bride_name}
-                  onChange={(e) => setSettings({ ...settings, bride_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Nama Lengkap</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.bride_full_name}
-                  onChange={(e) => setSettings({ ...settings, bride_full_name: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Ayah</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.bride_father}
-                  onChange={(e) => setSettings({ ...settings, bride_father: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Ibu</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.bride_mother}
-                  onChange={(e) => setSettings({ ...settings, bride_mother: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Foto</label>
-                <div className="flex items-center gap-3">
-                  {settings.bride_photo && (
-                    <img src={settings.bride_photo} alt="Bride" className="w-16 h-16 rounded-full object-cover" />
-                  )}
-                  <button
-                    onClick={() => handlePhotoUpload('bride_photo')}
-                    className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                  >
-                    Upload Foto
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* General Settings */}
-          <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Informasi Umum</h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Hashtag</label>
-                <input
-                  type="text"
-                  className={inputClass}
-                  value={settings.hashtag}
-                  onChange={(e) => setSettings({ ...settings, hashtag: e.target.value })}
-                />
-              </div>
-              <div>
-                <label className="block text-sm text-netflix-light mb-1">Tanggal Pernikahan</label>
-                <input
-                  type="date"
-                  className={inputClass}
-                  value={settings.wedding_date}
-                  onChange={(e) => setSettings({ ...settings, wedding_date: e.target.value })}
-                />
-              </div>
-            </div>
-            <div>
-              <label className="block text-sm text-netflix-light mb-1">Opening Text</label>
-              <textarea
-                className={inputClass + ' min-h-[100px]'}
-                value={settings.opening_text}
-                onChange={(e) => setSettings({ ...settings, opening_text: e.target.value })}
-              />
-            </div>
-            <div>
-              <label className="block text-sm text-netflix-light mb-1">Hero Image</label>
-              <div className="flex items-center gap-3">
-                {settings.hero_image && (
-                  <img src={settings.hero_image} alt="Hero" className="w-24 h-16 rounded-lg object-cover" />
-                )}
-                <button
-                  onClick={() => handlePhotoUpload('hero_image')}
-                  className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                >
-                  Upload Hero Image
-                </button>
-              </div>
-            </div>
-          </div>
-
+      <div className="flex flex-wrap gap-2">
+        {([
+          ['mempelai', 'Mempelai'],
+          ['acara', 'Acara'],
+          ['lovestory', 'Love Story'],
+          ['gallery', 'Gallery'],
+          ['amplop', 'Amplop'],
+          ['media', 'Media'],
+        ] as [Tab, string][]).map(([key, label]) => (
           <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="px-6 py-3 bg-netflix-red text-white font-medium rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+            key={key}
+            onClick={() => setActiveTab(key)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
+              activeTab === key
+                ? 'bg-netflix-red text-white'
+                : 'bg-netflix-dark text-gray-400 hover:text-white'
+            }`}
           >
-            {saving ? 'Saving...' : 'Simpan Pengaturan'}
+            {label}
           </button>
-        </div>
-      )}
+        ))}
+      </div>
 
-      {/* Acara Tab */}
-      {activeTab === 'acara' && (
+      {activeTab === 'mempelai' && settings && <MempelaiTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} onPhotoUpload={handlePhotoUpload} />}
+      {activeTab === 'acara' && <AcaraTab events={events} setEvents={setEvents} setMessage={setMessage} uploadFile={uploadFile} />}
+      {activeTab === 'lovestory' && <LoveStoryTab loveStories={loveStories} setLoveStories={setLoveStories} setMessage={setMessage} uploadFile={uploadFile} />}
+      {activeTab === 'gallery' && <GalleryTab gallery={gallery} setGallery={setGallery} setMessage={setMessage} uploadFile={uploadFile} galleryInputRef={galleryInputRef} />}
+      {activeTab === 'amplop' && <AmplopTab giftAccounts={giftAccounts} setGiftAccounts={setGiftAccounts} setMessage={setMessage} />}
+      {activeTab === 'media' && settings && <MediaTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} />}
+    </div>
+  )
+}
+
+
+// ==================== MEMPELAI TAB ====================
+
+function MempelaiTab({
+  settings,
+  setSettings,
+  saving,
+  onSave,
+  onPhotoUpload,
+}: {
+  settings: Settings
+  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
+  saving: boolean
+  onSave: () => void
+  onPhotoUpload: (callback: (url: string) => void) => void
+}) {
+  function update(field: keyof Settings, value: string) {
+    setSettings((prev) => (prev ? { ...prev, [field]: value } : prev))
+  }
+
+  return (
+    <div className="bg-netflix-dark rounded-xl p-6 space-y-6">
+      <h3 className="text-lg font-semibold text-white">Data Mempelai</h3>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Daftar Acara</h3>
+          <h4 className="text-sm font-medium text-gray-300">Mempelai Pria</h4>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
+            <input className={inputClass} value={settings.groom_name} onChange={(e) => update('groom_name', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
+            <input className={inputClass} value={settings.groom_full_name} onChange={(e) => update('groom_full_name', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
+            <input className={inputClass} value={settings.groom_father} onChange={(e) => update('groom_father', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
+            <input className={inputClass} value={settings.groom_mother} onChange={(e) => update('groom_mother', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Foto Mempelai Pria</label>
+            {settings.groom_photo && (
+              <img src={settings.groom_photo} alt="Groom" className="w-24 h-24 rounded-lg object-cover mb-2" />
+            )}
             <button
-              onClick={() => {
-                resetEventForm()
-                setShowEventForm(true)
-              }}
-              className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
+              type="button"
+              onClick={() => onPhotoUpload((url) => update('groom_photo', url))}
+              className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition"
             >
-              + Tambah Acara
+              Upload Foto
             </button>
           </div>
+        </div>
 
-          {showEventForm && (
-            <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-              <h4 className="text-md font-medium text-white">
-                {editingEventId ? 'Edit Acara' : 'Tambah Acara Baru'}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Judul</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={eventForm.title || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, title: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Tanggal</label>
-                  <input
-                    type="date"
-                    className={inputClass}
-                    value={eventForm.date || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, date: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Waktu Mulai</label>
-                  <input
-                    type="time"
-                    className={inputClass}
-                    value={eventForm.time_start || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, time_start: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Waktu Selesai</label>
-                  <input
-                    type="time"
-                    className={inputClass}
-                    value={eventForm.time_end || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, time_end: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Timezone</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    placeholder="WIB"
-                    value={eventForm.timezone || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, timezone: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Lokasi</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={eventForm.location || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, location: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-netflix-light mb-1">Alamat</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={eventForm.address || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, address: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-netflix-light mb-1">Map URL</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={eventForm.map_url || ''}
-                    onChange={(e) => setEventForm({ ...eventForm, map_url: e.target.value })}
-                  />
-                </div>
-                <div className="md:col-span-2">
-                  <label className="block text-sm text-netflix-light mb-1">Gambar</label>
-                  <div className="flex items-center gap-3">
-                    {eventForm.image_url && (
-                      <img src={eventForm.image_url} alt="Event" className="w-20 h-14 rounded-lg object-cover" />
-                    )}
-                    <button
-                      onClick={handleEventImageUpload}
-                      className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                    >
-                      Upload Gambar
-                    </button>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSaveEvent}
-                  className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                >
-                  {editingEventId ? 'Update' : 'Simpan'}
-                </button>
-                <button
-                  onClick={resetEventForm}
-                  className="px-4 py-2 bg-netflix-gray/20 text-netflix-light text-sm rounded-lg hover:bg-netflix-gray/30 transition"
-                >
-                  Batal
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Event List */}
-          <div className="space-y-3">
-            {events.map((event) => (
-              <div key={event.id} className="bg-netflix-dark rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-medium">{event.title}</h4>
-                  <p className="text-sm text-netflix-light">
-                    {event.date} | {event.time_start} - {event.time_end} {event.timezone || ''}
-                  </p>
-                  <p className="text-sm text-netflix-light">{event.location}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditEvent(event)}
-                    className="px-3 py-1 bg-netflix-gray/20 text-netflix-light text-sm rounded-lg hover:bg-netflix-gray/30 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteEvent(event.id)}
-                    className="px-3 py-1 bg-red-900/30 text-red-400 text-sm rounded-lg hover:bg-red-900/50 transition"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            ))}
-            {events.length === 0 && (
-              <p className="text-netflix-light text-sm text-center py-8">Belum ada acara.</p>
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium text-gray-300">Mempelai Wanita</h4>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
+            <input className={inputClass} value={settings.bride_name} onChange={(e) => update('bride_name', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
+            <input className={inputClass} value={settings.bride_full_name} onChange={(e) => update('bride_full_name', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
+            <input className={inputClass} value={settings.bride_father} onChange={(e) => update('bride_father', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
+            <input className={inputClass} value={settings.bride_mother} onChange={(e) => update('bride_mother', e.target.value)} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Foto Mempelai Wanita</label>
+            {settings.bride_photo && (
+              <img src={settings.bride_photo} alt="Bride" className="w-24 h-24 rounded-lg object-cover mb-2" />
             )}
+            <button
+              type="button"
+              onClick={() => onPhotoUpload((url) => update('bride_photo', url))}
+              className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition"
+            >
+              Upload Foto
+            </button>
           </div>
         </div>
-      )}
+      </div>
 
-      {/* Gallery Tab */}
-      {activeTab === 'gallery' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Gallery</h3>
-            <label className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition cursor-pointer">
-              + Upload Foto
-              <input
-                ref={galleryInputRef}
-                type="file"
-                accept="image/*"
-                multiple
-                className="hidden"
-                onChange={handleGalleryUpload}
-              />
-            </label>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Hashtag</label>
+          <input className={inputClass} value={settings.hashtag} onChange={(e) => update('hashtag', e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Tanggal Pernikahan</label>
+          <input type="datetime-local" className={inputClass} value={settings.wedding_date ? settings.wedding_date.slice(0, 16) : ''} onChange={(e) => update('wedding_date', e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Teks Pembuka</label>
+          <textarea className={inputClass} rows={4} value={settings.opening_text} onChange={(e) => update('opening_text', e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">Hero Image</label>
+          {settings.hero_image && (
+            <img src={settings.hero_image} alt="Hero" className="w-full max-w-xs h-40 rounded-lg object-cover mb-2" />
+          )}
+          <button
+            type="button"
+            onClick={() => onPhotoUpload((url) => update('hero_image', url))}
+            className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Upload Hero Image
+          </button>
+        </div>
+      </div>
+
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+      >
+        {saving ? 'Menyimpan...' : 'Simpan'}
+      </button>
+    </div>
+  )
+}
+
+
+// ==================== ACARA TAB ====================
+
+function AcaraTab({
+  events,
+  setEvents,
+  setMessage,
+  uploadFile,
+}: {
+  events: Event[]
+  setEvents: React.Dispatch<React.SetStateAction<Event[]>>
+  setMessage: React.Dispatch<React.SetStateAction<string>>
+  uploadFile: (file: File) => Promise<string | null>
+}) {
+  const [editing, setEditing] = useState<Event | null>(null)
+  const [form, setForm] = useState({
+    title: '',
+    date: '',
+    time_start: '',
+    time_end: '',
+    timezone: 'WIB',
+    location: '',
+    address: '',
+    map_url: '',
+    image_url: '',
+  })
+
+  function resetForm() {
+    setForm({ title: '', date: '', time_start: '', time_end: '', timezone: 'WIB', location: '', address: '', map_url: '', image_url: '' })
+    setEditing(null)
+  }
+
+  function startEdit(event: Event) {
+    setEditing(event)
+    setForm({
+      title: event.title,
+      date: event.date,
+      time_start: event.time_start,
+      time_end: event.time_end,
+      timezone: event.timezone || 'WIB',
+      location: event.location,
+      address: event.address,
+      map_url: event.map_url || '',
+      image_url: event.image_url || '',
+    })
+  }
+
+  function handleImageUpload() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      const url = await uploadFile(file)
+      if (url) setForm((prev) => ({ ...prev, image_url: url }))
+    }
+    input.click()
+  }
+
+  async function handleSubmit() {
+    if (!form.title || !form.date || !form.location) {
+      setMessage('Error: Judul, tanggal, dan lokasi wajib diisi')
+      setTimeout(() => setMessage(''), 5000)
+      return
+    }
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/events/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setEvents((prev) => prev.map((ev) => (ev.id === editing.id ? updated : ev)))
+          setMessage('Acara berhasil diperbarui')
+          resetForm()
+        } else {
+          setMessage('Error memperbarui acara')
+        }
+      } else {
+        const res = await fetch('/api/events', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const created = await res.json()
+          setEvents((prev) => [...prev, created])
+          setMessage('Acara berhasil ditambahkan')
+          resetForm()
+        } else {
+          setMessage('Error menambahkan acara')
+        }
+      }
+    } catch {
+      setMessage('Error menyimpan acara')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setEvents((prev) => prev.filter((ev) => ev.id !== id))
+        setMessage('Acara berhasil dihapus')
+      } else {
+        setMessage('Error menghapus acara')
+      }
+    } catch {
+      setMessage('Error menghapus acara')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Acara' : 'Tambah Acara'}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Judul</label>
+            <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
           </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Tanggal</label>
+            <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
+            <input type="time" className={inputClass} value={form.time_start} onChange={(e) => setForm({ ...form, time_start: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Waktu Selesai</label>
+            <input type="time" className={inputClass} value={form.time_end} onChange={(e) => setForm({ ...form, time_end: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Zona Waktu</label>
+            <select className={inputClass} value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
+              <option value="WIB">WIB</option>
+              <option value="WITA">WITA</option>
+              <option value="WIT">WIT</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Lokasi</label>
+            <input className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs text-gray-400 mb-1">Alamat</label>
+            <input className={inputClass} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs text-gray-400 mb-1">URL Peta</label>
+            <input className={inputClass} value={form.map_url} onChange={(e) => setForm({ ...form, map_url: e.target.value })} />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+            {form.image_url && (
+              <img src={form.image_url} alt="Event" className="w-32 h-20 rounded-lg object-cover mb-2" />
+            )}
+            <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+              Upload Gambar
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            {editing ? 'Perbarui' : 'Tambah'}
+          </button>
+          {editing && (
+            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+              Batal
+            </button>
+          )}
+        </div>
+      </div>
 
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
+        <h3 className="text-lg font-semibold text-white">Daftar Acara</h3>
+        {events.length === 0 ? (
+          <p className="text-gray-400 text-sm">Belum ada acara</p>
+        ) : (
+          events.map((event) => (
+            <div key={event.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
+              <div>
+                <p className="text-white font-medium">{event.title}</p>
+                <p className="text-gray-400 text-xs">{event.date} | {event.time_start} - {event.time_end} {event.timezone}</p>
+                <p className="text-gray-400 text-xs">{event.location}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => startEdit(event)} className="text-blue-400 text-sm hover:underline">Edit</button>
+                <button onClick={() => handleDelete(event.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ==================== LOVE STORY TAB ====================
+
+function LoveStoryTab({
+  loveStories,
+  setLoveStories,
+  setMessage,
+  uploadFile,
+}: {
+  loveStories: LoveStory[]
+  setLoveStories: React.Dispatch<React.SetStateAction<LoveStory[]>>
+  setMessage: React.Dispatch<React.SetStateAction<string>>
+  uploadFile: (file: File) => Promise<string | null>
+}) {
+  const [editing, setEditing] = useState<LoveStory | null>(null)
+  const [form, setForm] = useState({
+    title: '',
+    date: '',
+    description: '',
+    image_url: '',
+  })
+
+  function resetForm() {
+    setForm({ title: '', date: '', description: '', image_url: '' })
+    setEditing(null)
+  }
+
+  function startEdit(story: LoveStory) {
+    setEditing(story)
+    setForm({
+      title: story.title,
+      date: story.date,
+      description: story.description,
+      image_url: story.image_url || '',
+    })
+  }
+
+  function handleImageUpload() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      const url = await uploadFile(file)
+      if (url) setForm((prev) => ({ ...prev, image_url: url }))
+    }
+    input.click()
+  }
+
+  async function handleSubmit() {
+    if (!form.title || !form.date || !form.description) {
+      setMessage('Error: Judul, tanggal, dan deskripsi wajib diisi')
+      setTimeout(() => setMessage(''), 5000)
+      return
+    }
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/love-stories/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setLoveStories((prev) => prev.map((s) => (s.id === editing.id ? updated : s)))
+          setMessage('Love story berhasil diperbarui')
+          resetForm()
+        } else {
+          setMessage('Error memperbarui love story')
+        }
+      } else {
+        const res = await fetch('/api/love-stories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const created = await res.json()
+          setLoveStories((prev) => [...prev, created])
+          setMessage('Love story berhasil ditambahkan')
+          resetForm()
+        } else {
+          setMessage('Error menambahkan love story')
+        }
+      }
+    } catch {
+      setMessage('Error menyimpan love story')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/love-stories/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setLoveStories((prev) => prev.filter((s) => s.id !== id))
+        setMessage('Love story berhasil dihapus')
+      } else {
+        setMessage('Error menghapus love story')
+      }
+    } catch {
+      setMessage('Error menghapus love story')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Love Story' : 'Tambah Love Story'}</h3>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Judul</label>
+            <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Tanggal (contoh: Januari 2020)</label>
+            <input className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Deskripsi</label>
+            <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+            {form.image_url && (
+              <img src={form.image_url} alt="Love Story" className="w-32 h-20 rounded-lg object-cover mb-2" />
+            )}
+            <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+              Upload Gambar
+            </button>
+          </div>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            {editing ? 'Perbarui' : 'Tambah'}
+          </button>
+          {editing && (
+            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+              Batal
+            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
+        <h3 className="text-lg font-semibold text-white">Daftar Love Story</h3>
+        {loveStories.length === 0 ? (
+          <p className="text-gray-400 text-sm">Belum ada love story</p>
+        ) : (
+          loveStories.map((story) => (
+            <div key={story.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
+              <div className="flex items-center gap-3">
+                {story.image_url && (
+                  <img src={story.image_url} alt={story.title} className="w-12 h-12 rounded-lg object-cover" />
+                )}
+                <div>
+                  <p className="text-white font-medium">{story.title}</p>
+                  <p className="text-gray-400 text-xs">{story.date}</p>
+                  <p className="text-gray-400 text-xs line-clamp-1">{story.description}</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => startEdit(story)} className="text-blue-400 text-sm hover:underline">Edit</button>
+                <button onClick={() => handleDelete(story.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ==================== GALLERY TAB ====================
+
+function GalleryTab({
+  gallery,
+  setGallery,
+  setMessage,
+  uploadFile,
+  galleryInputRef,
+}: {
+  gallery: GalleryImage[]
+  setGallery: React.Dispatch<React.SetStateAction<GalleryImage[]>>
+  setMessage: React.Dispatch<React.SetStateAction<string>>
+  uploadFile: (file: File) => Promise<string | null>
+  galleryInputRef: React.RefObject<HTMLInputElement | null>
+}) {
+  const [uploading, setUploading] = useState(false)
+
+  async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    const uploaded: GalleryImage[] = []
+
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadFile(files[i])
+      if (url) {
+        try {
+          const res = await fetch('/api/gallery', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ image_url: url }),
+          })
+          if (res.ok) {
+            const created = await res.json()
+            uploaded.push(created)
+          }
+        } catch {
+          // continue with next file
+        }
+      }
+    }
+
+    if (uploaded.length > 0) {
+      setGallery((prev) => [...prev, ...uploaded])
+      setMessage(`${uploaded.length} foto berhasil diupload`)
+    } else {
+      setMessage('Upload gagal')
+    }
+    setUploading(false)
+    setTimeout(() => setMessage(''), 5000)
+
+    if (galleryInputRef.current) {
+      galleryInputRef.current.value = ''
+    }
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/gallery?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setGallery((prev) => prev.filter((img) => img.id !== id))
+        setMessage('Foto berhasil dihapus')
+      } else {
+        setMessage('Error menghapus foto')
+      }
+    } catch {
+      setMessage('Error menghapus foto')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-netflix-dark rounded-xl p-6">
+        <h3 className="text-lg font-semibold text-white mb-4">Upload Foto</h3>
+        <input
+          ref={galleryInputRef}
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={handleGalleryUpload}
+          className="hidden"
+        />
+        <button
+          onClick={() => galleryInputRef.current?.click()}
+          disabled={uploading}
+          className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+        >
+          {uploading ? 'Mengupload...' : 'Pilih Foto'}
+        </button>
+      </div>
+
+      <div className="bg-netflix-dark rounded-xl p-4">
+        <h3 className="text-lg font-semibold text-white mb-4">Gallery ({gallery.length} foto)</h3>
+        {gallery.length === 0 ? (
+          <p className="text-gray-400 text-sm">Belum ada foto</p>
+        ) : (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {gallery.map((img) => (
               <div key={img.id} className="relative group">
-                <img
-                  src={img.image_url}
-                  alt={img.caption || 'Gallery'}
-                  className="w-full h-40 object-cover rounded-lg"
-                />
+                <img src={img.image_url} alt="Gallery" className="w-full h-32 rounded-lg object-cover" />
                 <button
-                  onClick={() => handleDeleteGalleryImage(img.id)}
-                  className="absolute top-2 right-2 w-7 h-7 bg-red-600 text-white rounded-full text-xs flex items-center justify-center opacity-0 group-hover:opacity-100 transition"
+                  onClick={() => handleDelete(img.id)}
+                  className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
                 >
-                  X
+                  Hapus
                 </button>
               </div>
             ))}
           </div>
-          {gallery.length === 0 && (
-            <p className="text-netflix-light text-sm text-center py-8">Belum ada foto di gallery.</p>
-          )}
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ==================== AMPLOP TAB ====================
+
+function AmplopTab({
+  giftAccounts,
+  setGiftAccounts,
+  setMessage,
+}: {
+  giftAccounts: GiftAccount[]
+  setGiftAccounts: React.Dispatch<React.SetStateAction<GiftAccount[]>>
+  setMessage: React.Dispatch<React.SetStateAction<string>>
+}) {
+  const [editing, setEditing] = useState<GiftAccount | null>(null)
+  const [form, setForm] = useState({
+    type: 'bank' as 'bank' | 'ewallet',
+    provider_name: '',
+    account_number: '',
+    account_holder: '',
+  })
+
+  function resetForm() {
+    setForm({ type: 'bank', provider_name: '', account_number: '', account_holder: '' })
+    setEditing(null)
+  }
+
+  function startEdit(account: GiftAccount) {
+    setEditing(account)
+    setForm({
+      type: account.type,
+      provider_name: account.provider_name,
+      account_number: account.account_number,
+      account_holder: account.account_holder,
+    })
+  }
+
+  async function handleSubmit() {
+    if (!form.provider_name || !form.account_number || !form.account_holder) {
+      setMessage('Error: Semua field wajib diisi')
+      setTimeout(() => setMessage(''), 5000)
+      return
+    }
+
+    try {
+      if (editing) {
+        const res = await fetch(`/api/gift-accounts/${editing.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const updated = await res.json()
+          setGiftAccounts((prev) => prev.map((a) => (a.id === editing.id ? updated : a)))
+          setMessage('Rekening berhasil diperbarui')
+          resetForm()
+        } else {
+          setMessage('Error memperbarui rekening')
+        }
+      } else {
+        const res = await fetch('/api/gift-accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (res.ok) {
+          const created = await res.json()
+          setGiftAccounts((prev) => [...prev, created])
+          setMessage('Rekening berhasil ditambahkan')
+          resetForm()
+        } else {
+          setMessage('Error menambahkan rekening')
+        }
+      }
+    } catch {
+      setMessage('Error menyimpan rekening')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  async function handleDelete(id: string) {
+    try {
+      const res = await fetch(`/api/gift-accounts/${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        setGiftAccounts((prev) => prev.filter((a) => a.id !== id))
+        setMessage('Rekening berhasil dihapus')
+      } else {
+        setMessage('Error menghapus rekening')
+      }
+    } catch {
+      setMessage('Error menghapus rekening')
+    }
+    setTimeout(() => setMessage(''), 5000)
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Rekening' : 'Tambah Rekening'}</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Tipe</label>
+            <select className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'bank' | 'ewallet' })}>
+              <option value="bank">Bank</option>
+              <option value="ewallet">E-Wallet</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Provider</label>
+            <input className={inputClass} value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nomor Rekening</label>
+            <input className={inputClass} value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
+          </div>
+          <div>
+            <label className="block text-xs text-gray-400 mb-1">Nama Pemilik</label>
+            <input className={inputClass} value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} />
+          </div>
         </div>
-      )}
-
-      {/* Amplop Tab */}
-      {activeTab === 'amplop' && (
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-white">Amplop Digital</h3>
-            <button
-              onClick={() => {
-                resetGiftForm()
-                setShowGiftForm(true)
-              }}
-              className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-            >
-              + Tambah Rekening
-            </button>
-          </div>
-
-          {showGiftForm && (
-            <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-              <h4 className="text-md font-medium text-white">
-                {editingGiftId ? 'Edit Rekening' : 'Tambah Rekening Baru'}
-              </h4>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Tipe</label>
-                  <select
-                    className={inputClass}
-                    value={giftForm.type || 'bank'}
-                    onChange={(e) => setGiftForm({ ...giftForm, type: e.target.value as 'bank' | 'ewallet' })}
-                  >
-                    <option value="bank">Bank</option>
-                    <option value="ewallet">E-Wallet</option>
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Nama Provider</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    placeholder="BCA, Mandiri, GoPay, dll"
-                    value={giftForm.provider_name || ''}
-                    onChange={(e) => setGiftForm({ ...giftForm, provider_name: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Nomor Rekening</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={giftForm.account_number || ''}
-                    onChange={(e) => setGiftForm({ ...giftForm, account_number: e.target.value })}
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-netflix-light mb-1">Atas Nama</label>
-                  <input
-                    type="text"
-                    className={inputClass}
-                    value={giftForm.account_holder || ''}
-                    onChange={(e) => setGiftForm({ ...giftForm, account_holder: e.target.value })}
-                  />
-                </div>
-              </div>
-              <div className="flex gap-3">
-                <button
-                  onClick={handleSaveGift}
-                  className="px-4 py-2 bg-netflix-red text-white text-sm rounded-lg hover:bg-red-700 transition"
-                >
-                  {editingGiftId ? 'Update' : 'Simpan'}
-                </button>
-                <button
-                  onClick={resetGiftForm}
-                  className="px-4 py-2 bg-netflix-gray/20 text-netflix-light text-sm rounded-lg hover:bg-netflix-gray/30 transition"
-                >
-                  Batal
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* Gift Account List */}
-          <div className="space-y-3">
-            {giftAccounts.map((gift) => (
-              <div key={gift.id} className="bg-netflix-dark rounded-xl p-4 flex items-center justify-between">
-                <div>
-                  <h4 className="text-white font-medium">{gift.provider_name}</h4>
-                  <p className="text-sm text-netflix-light">
-                    {gift.type === 'bank' ? 'Bank' : 'E-Wallet'} - {gift.account_number}
-                  </p>
-                  <p className="text-sm text-netflix-light">a.n. {gift.account_holder}</p>
-                </div>
-                <div className="flex gap-2">
-                  <button
-                    onClick={() => startEditGift(gift)}
-                    className="px-3 py-1 bg-netflix-gray/20 text-netflix-light text-sm rounded-lg hover:bg-netflix-gray/30 transition"
-                  >
-                    Edit
-                  </button>
-                  <button
-                    onClick={() => handleDeleteGift(gift.id)}
-                    className="px-3 py-1 bg-red-900/30 text-red-400 text-sm rounded-lg hover:bg-red-900/50 transition"
-                  >
-                    Hapus
-                  </button>
-                </div>
-              </div>
-            ))}
-            {giftAccounts.length === 0 && (
-              <p className="text-netflix-light text-sm text-center py-8">Belum ada rekening.</p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Media Tab */}
-      {activeTab === 'media' && settings && (
-        <div className="space-y-4">
-          <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-            <h3 className="text-lg font-semibold text-white">Background Music</h3>
-            <div>
-              <label className="block text-sm text-netflix-light mb-1">Music URL</label>
-              <input
-                type="text"
-                className={inputClass}
-                placeholder="https://example.com/music.mp3"
-                value={settings.music_url || ''}
-                onChange={(e) => setSettings({ ...settings, music_url: e.target.value })}
-              />
-              <p className="text-xs text-netflix-light mt-1">
-                Masukkan URL file musik (MP3) untuk background music undangan.
-              </p>
-            </div>
-          </div>
-
-          <button
-            onClick={handleSaveSettings}
-            disabled={saving}
-            className="px-6 py-3 bg-netflix-red text-white font-medium rounded-lg hover:bg-red-700 transition disabled:opacity-50"
-          >
-            {saving ? 'Saving...' : 'Simpan Pengaturan'}
+        <div className="flex gap-2">
+          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            {editing ? 'Perbarui' : 'Tambah'}
           </button>
+          {editing && (
+            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+              Batal
+            </button>
+          )}
         </div>
-      )}
+      </div>
+
+      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
+        <h3 className="text-lg font-semibold text-white">Daftar Rekening</h3>
+        {giftAccounts.length === 0 ? (
+          <p className="text-gray-400 text-sm">Belum ada rekening</p>
+        ) : (
+          giftAccounts.map((account) => (
+            <div key={account.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
+              <div>
+                <p className="text-white font-medium">{account.provider_name}</p>
+                <p className="text-gray-400 text-xs">{account.type === 'bank' ? 'Bank' : 'E-Wallet'} - {account.account_number}</p>
+                <p className="text-gray-400 text-xs">a.n. {account.account_holder}</p>
+              </div>
+              <div className="flex gap-2">
+                <button onClick={() => startEdit(account)} className="text-blue-400 text-sm hover:underline">Edit</button>
+                <button onClick={() => handleDelete(account.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
+              </div>
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  )
+}
+
+
+// ==================== MEDIA TAB ====================
+
+function MediaTab({
+  settings,
+  setSettings,
+  saving,
+  onSave,
+}: {
+  settings: Settings
+  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
+  saving: boolean
+  onSave: () => void
+}) {
+  return (
+    <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+      <h3 className="text-lg font-semibold text-white">Media</h3>
+      <div>
+        <label className="block text-xs text-gray-400 mb-1">URL Musik Latar</label>
+        <input
+          className={inputClass}
+          value={settings.music_url || ''}
+          onChange={(e) => setSettings((prev) => (prev ? { ...prev, music_url: e.target.value } : prev))}
+          placeholder="https://example.com/music.mp3"
+        />
+      </div>
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+      >
+        {saving ? 'Menyimpan...' : 'Simpan'}
+      </button>
     </div>
   )
 }
