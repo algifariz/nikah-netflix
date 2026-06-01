@@ -846,6 +846,7 @@ function AmplopTab({
   setMessage: React.Dispatch<React.SetStateAction<string>>
 }) {
   const [editing, setEditing] = useState<GiftAccount | null>(null)
+  const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
     type: 'bank' as 'bank' | 'ewallet',
     provider_name: '',
@@ -853,13 +854,33 @@ function AmplopTab({
     account_holder: '',
   })
 
+  function getProviderLogo(name: string, type: string) {
+    const n = name.toLowerCase()
+    // Return color and abbreviation for inline logo
+    if (n.includes('bca')) return { color: 'bg-blue-800', text: 'BCA' }
+    if (n.includes('bni')) return { color: 'bg-orange-600', text: 'BNI' }
+    if (n.includes('bri')) return { color: 'bg-blue-700', text: 'BRI' }
+    if (n.includes('mandiri')) return { color: 'bg-blue-900', text: 'MDR' }
+    if (n.includes('bsi')) return { color: 'bg-teal-700', text: 'BSI' }
+    if (n.includes('cimb')) return { color: 'bg-red-800', text: 'CIMB' }
+    if (n.includes('dana')) return { color: 'bg-blue-500', text: 'DANA' }
+    if (n.includes('gopay') || n.includes('go-pay')) return { color: 'bg-green-600', text: 'GP' }
+    if (n.includes('ovo')) return { color: 'bg-purple-700', text: 'OVO' }
+    if (n.includes('shopeepay') || n.includes('shopee')) return { color: 'bg-orange-500', text: 'SPay' }
+    if (n.includes('linkaja') || n.includes('link aja')) return { color: 'bg-red-600', text: 'LA' }
+    if (type === 'ewallet') return { color: 'bg-green-700', text: name.slice(0, 2).toUpperCase() }
+    return { color: 'bg-gray-600', text: name.slice(0, 3).toUpperCase() }
+  }
+
   function resetForm() {
     setForm({ type: 'bank', provider_name: '', account_number: '', account_holder: '' })
     setEditing(null)
+    setShowForm(false)
   }
 
   function startEdit(account: GiftAccount) {
     setEditing(account)
+    setShowForm(true)
     setForm({
       type: account.type,
       provider_name: account.provider_name,
@@ -928,65 +949,89 @@ function AmplopTab({
 
   return (
     <div className="space-y-6">
-      <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
-        <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Rekening' : 'Tambah Rekening'}</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Tipe</label>
-            <select className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'bank' | 'ewallet' })}>
-              <option value="bank">Bank</option>
-              <option value="ewallet">E-Wallet</option>
-            </select>
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Provider</label>
-            <input className={inputClass} value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Nomor Rekening</label>
-            <input className={inputClass} value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
-          </div>
-          <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Pemilik</label>
-            <input className={inputClass} value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} />
-          </div>
-        </div>
-        <div className="flex gap-2">
-          <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
-            {editing ? 'Perbarui' : 'Tambah'}
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Amplop Digital</h3>
+        {!showForm && (
+          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+            + Tambah Rekening
           </button>
-          {editing && (
+        )}
+      </div>
+
+      {showForm && (
+        <div className="bg-netflix-dark rounded-xl p-6 space-y-4">
+          <h4 className="text-md font-semibold text-white">{editing ? 'Edit Rekening' : 'Tambah Rekening Baru'}</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Tipe</label>
+              <select className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'bank' | 'ewallet' })}>
+                <option value="bank">Bank</option>
+                <option value="ewallet">E-Wallet</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Nama Provider</label>
+              <input className={inputClass} placeholder="BCA, BNI, BSI, Dana, GoPay, dll" value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Nomor Rekening / Nomor HP</label>
+              <input className={inputClass} value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
+            </div>
+            <div>
+              <label className="block text-xs text-gray-400 mb-1">Atas Nama</label>
+              <input className={inputClass} value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+              {editing ? 'Perbarui' : 'Tambah'}
+            </button>
             <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
-          )}
+          </div>
         </div>
-      </div>
+      )}
 
-      <div className="bg-netflix-dark rounded-xl p-4 space-y-3">
-        <h3 className="text-lg font-semibold text-white">Daftar Rekening</h3>
+      {/* Rekening Cards */}
+      <div className="space-y-4">
         {giftAccounts.length === 0 ? (
-          <p className="text-gray-400 text-sm">Belum ada rekening</p>
+          <p className="text-gray-400 text-sm text-center py-8">Belum ada rekening</p>
         ) : (
-          giftAccounts.map((account) => (
-            <div key={account.id} className="flex items-center justify-between p-3 bg-netflix-black rounded-lg">
-              <div>
-                <p className="text-white font-medium">{account.provider_name}</p>
-                <p className="text-gray-400 text-xs">{account.type === 'bank' ? 'Bank' : 'E-Wallet'} - {account.account_number}</p>
-                <p className="text-gray-400 text-xs">a.n. {account.account_holder}</p>
+          giftAccounts.map((account) => {
+            const logo = getProviderLogo(account.provider_name, account.type)
+            return (
+              <div key={account.id} className="bg-netflix-dark rounded-xl p-4 border border-netflix-gray/20 hover:border-netflix-red/20 transition">
+                <div className="flex gap-4 items-center">
+                  {/* Logo */}
+                  <div className={`w-12 h-12 rounded-lg ${logo.color} flex items-center justify-center flex-shrink-0`}>
+                    <span className="text-white font-bold text-xs">{logo.text}</span>
+                  </div>
+                  {/* Info */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded ${account.type === 'bank' ? 'bg-blue-600' : 'bg-green-600'} text-white`}>
+                        {account.type === 'bank' ? 'BANK' : 'E-WALLET'}
+                      </span>
+                      <span className="text-white font-medium text-sm">{account.provider_name}</span>
+                    </div>
+                    <p className="text-white font-mono text-sm">{account.account_number}</p>
+                    <p className="text-gray-400 text-xs">a.n. {account.account_holder}</p>
+                  </div>
+                  {/* Actions */}
+                  <div className="flex flex-col gap-1 flex-shrink-0">
+                    <button onClick={() => startEdit(account)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                    <button onClick={() => handleDelete(account.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                  </div>
+                </div>
               </div>
-              <div className="flex gap-2">
-                <button onClick={() => startEdit(account)} className="text-blue-400 text-sm hover:underline">Edit</button>
-                <button onClick={() => handleDelete(account.id)} className="text-red-400 text-sm hover:underline">Hapus</button>
-              </div>
-            </div>
-          ))
+            )
+          })
         )}
       </div>
     </div>
   )
 }
-
 
 // ==================== MEDIA TAB ====================
 
