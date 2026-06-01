@@ -1051,7 +1051,7 @@ function MediaTab({
   async function handleMusicUpload() {
     const input = document.createElement('input')
     input.type = 'file'
-    input.accept = 'audio/*'
+    input.accept = 'audio/mp3,audio/mpeg,audio/wav,audio/*'
     input.onchange = async (e) => {
       const target = e.target as HTMLInputElement
       const file = target.files?.[0]
@@ -1065,9 +1065,13 @@ function MediaTab({
         const data = await res.json()
         if (res.ok && data.url) {
           setSettings((prev) => (prev ? { ...prev, music_url: data.url } : prev))
+          // Auto save after upload
+          setTimeout(() => onSave(), 500)
+        } else {
+          alert(data.error || 'Upload musik gagal')
         }
-      } catch {
-        // ignore
+      } catch (err) {
+        alert('Upload musik gagal: network error')
       } finally {
         setUploading(false)
       }

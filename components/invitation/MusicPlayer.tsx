@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect } from 'react'
+import { useRef, useEffect, useCallback } from 'react'
 import { motion } from 'framer-motion'
 
 interface Props {
@@ -11,30 +11,64 @@ interface Props {
 
 export function MusicPlayer({ musicUrl, isPlaying, setIsPlaying }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
+  const hasTriedPlay = useRef(false)
+
+  const tryPlay = useCallback(() => {
+    if (!audioRef.current || !musicUrl) return
+
+    audioRef.current.play().then(() => {
+      hasTriedPlay.current = true
+    }).catch(() => {
+      // Browser blocked autoplay, wait for user interaction
+      setIsPlaying(false)
+    })
+  }, [musicUrl, setIsPlaying])
 
   useEffect(() => {
     if (!audioRef.current || !musicUrl) return
 
     if (isPlaying) {
-      audioRef.current.play().catch(() => setIsPlaying(false))
+      tryPlay()
     } else {
       audioRef.current.pause()
     }
-  }, [isPlaying, musicUrl, setIsPlaying])
+  }, [isPlaying, musicUrl, tryPlay])
 
+  // Also try to play on any user interaction if isPlaying is true but audio is paused
+  useEffect(() => {
+    function handleInteraction() {
+      if (isPlaying && audioRef.current && audioRef.current.paused && musicUrl) {
+        tryPlay()
+      }
+    }
+
+    document.addEventListener('click', handleInteraction, { once: true })
+    document.addEventListener('touchstart', handleInteraction, { once: true })
+
+    return () => {
+      document.removeEventListener('click', handleInteraction)
+      document.removeEventListener('touchstart', handleInteraction)
+    }
+  }, [isPlaying, musicUrl, tryPlay])
+
+  // Don't render if no music URL
   if (!musicUrl) return null
 
   return (
     <>
-      <audio ref={audioRef} src={musicUrl} loop />
+      <audio ref={audioRef} src={musicUrl} loop preload="auto" />
       <motion.button
-        initial={{ scale: 0 }}
-        animate={{ scale: 1 }}
-        transition={{ delay: 1, type: 'spring' }}
+        initial={{ scale: 0, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.5, type: 'spring' }}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.9 }}
         onClick={() => setIsPlaying(!isPlaying)}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-netflix-red flex items-center justify-center shadow-lg shadow-netflix-red/30"
+        className={`fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50 w-11 h-11 sm:w-12 sm:h-12 rounded-full flex items-center justify-center shadow-lg transition-colors ${
+          isPlaying
+            ? 'bg-netflix-red shadow-netflix-red/30'
+            : 'bg-white/20 backdrop-blur-sm shadow-black/30'
+        }`}
         aria-label={isPlaying ? 'Pause music' : 'Play music'}
       >
         {isPlaying ? (
@@ -45,6 +79,14 @@ export function MusicPlayer({ musicUrl, isPlaying, setIsPlaying }: Props) {
           <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
             <path d="M8 5v14l11-7z" />
           </svg>
+        )}
+
+        {/* Playing indicator animation */}
+        {isPlaying && (
+          <span className="absolute -top-0.5 -right-0.5 w-3 h-3">
+            <span className="absolute inline-flex h-full w-full rounded-full bg-netflix-red opacity-75 animate-ping" />
+            <span className="relative inline-flex rounded-full h-3 w-3 bg-netflix-red" />
+          </span>
         )}
       </motion.button>
     </>

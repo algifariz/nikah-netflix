@@ -97,13 +97,53 @@ export function HeroSection({ settings }: Props) {
             transition={{ delay: 1.1, duration: 0.6 }}
             className="flex flex-wrap items-center gap-3"
           >
-            <button className="flex items-center gap-2 bg-white text-black font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-white/80 transition active:scale-95">
+            <button
+              onClick={() => {
+                // Auto scroll through entire page slowly, stops if user scrolls manually
+                const totalHeight = document.documentElement.scrollHeight - window.innerHeight
+                const duration = 120000 // 2 minutes to scroll entire page
+                const startTime = performance.now()
+                const startY = window.scrollY
+                let stopped = false
+
+                function stopAutoScroll() {
+                  stopped = true
+                  window.removeEventListener('wheel', stopAutoScroll)
+                  window.removeEventListener('touchmove', stopAutoScroll)
+                }
+
+                window.addEventListener('wheel', stopAutoScroll, { once: true })
+                window.addEventListener('touchmove', stopAutoScroll, { once: true })
+
+                function scrollStep(currentTime: number) {
+                  if (stopped) return
+                  const elapsed = currentTime - startTime
+                  const progress = Math.min(elapsed / duration, 1)
+                  const ease = progress < 0.5
+                    ? 2 * progress * progress
+                    : 1 - Math.pow(-2 * progress + 2, 2) / 2
+                  window.scrollTo(0, startY + totalHeight * ease)
+                  if (progress < 1) {
+                    requestAnimationFrame(scrollStep)
+                  }
+                }
+                requestAnimationFrame(scrollStep)
+              }}
+              className="flex items-center gap-2 bg-white text-black font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-white/80 transition active:scale-95"
+            >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
               Play
             </button>
-            <button className="flex items-center gap-2 bg-white/20 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-white/30 transition backdrop-blur-sm active:scale-95">
+            <button
+              onClick={() => {
+                // Scroll to Timeline & Location section
+                const el = document.getElementById('timeline-section')
+                if (el) el.scrollIntoView({ behavior: 'smooth' })
+              }}
+              className="flex items-center gap-2 bg-white/20 text-white font-bold px-4 sm:px-6 py-2.5 sm:py-3 rounded text-sm sm:text-base hover:bg-white/30 transition backdrop-blur-sm active:scale-95"
+            >
               <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>

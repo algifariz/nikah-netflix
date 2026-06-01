@@ -32,7 +32,7 @@ export function EventSection({ events }: Props) {
   if (events.length === 0) return null
 
   return (
-    <section className="netflix-section">
+    <section className="netflix-section" id="timeline-section">
       <motion.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}

@@ -31,15 +31,9 @@ export function WeddingApp({ guestName, code, category }: Props) {
 
   if (loading) {
     return (
-      <div className="min-h-[100svh] bg-netflix-black flex flex-col items-center justify-center gap-4">
-        <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.5 }}
-        >
-          <span className="text-netflix-red text-6xl font-black">N</span>
-        </motion.div>
-        <div className="w-10 h-10 border-3 border-netflix-red border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-[100svh] bg-netflix-black flex flex-col items-center justify-center gap-4" suppressHydrationWarning>
+        <div className="text-netflix-red text-6xl font-black">N</div>
+        <div className="w-10 h-10 border-4 border-netflix-red border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -58,7 +52,7 @@ export function WeddingApp({ guestName, code, category }: Props) {
   }
 
   return (
-    <main className="min-h-[100svh] bg-netflix-black overflow-x-hidden">
+    <main className="min-h-[100svh] bg-netflix-black overflow-x-hidden" suppressHydrationWarning>
       {/* Netflix-style top navigation */}
       <motion.nav
         initial={{ opacity: 0, y: -20 }}

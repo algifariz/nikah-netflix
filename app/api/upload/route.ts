@@ -3,6 +3,12 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
+export const config = {
+  api: {
+    bodyParser: false,
+  },
+}
+
 export async function POST(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -16,39 +22,52 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    // Convert File to Buffer
+    // Check file size (max 50MB)
+    if (file.size > 50 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File terlalu besar (max 50MB)' }, { status: 400 })
+    }
+
+    // Convert File to Uint8Array (works better than Buffer in edge/serverless)
     const arrayBuffer = await file.arrayBuffer()
-    const buffer = Buffer.from(arrayBuffer)
+    const uint8Array = new Uint8Array(arrayBuffer)
 
-    const fileExt = file.name.split('.').pop() || 'jpg'
-    const fileName = `${folder}/${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+    const fileExt = file.name.split('.').pop() || 'bin'
+    const fileName = `${folder}/${Date.now()}_${Math.random().toString(36).slice(2, 8)}.${fileExt}`
 
-    // Try uploading to Supabase Storage
+    // First check if bucket exists, if not create it
+    const { data: buckets } = await supabaseAdmin.storage.listBuckets()
+    const bucketExists = buckets?.some(b => b.id === 'uploads')
+
+    if (!bucketExists) {
+      await supabaseAdmin.storage.createBucket('uploads', { public: true })
+    }
+
+    // Upload file
     const { data, error } = await supabaseAdmin.storage
       .from('uploads')
-      .upload(fileName, buffer, {
+      .upload(fileName, uint8Array, {
         contentType: file.type,
         upsert: true,
       })
 
     if (error) {
-      console.error('[Upload Error]', JSON.stringify(error))
-      // If bucket doesn't exist or storage fails, return error with details
+      console.error('[Upload Error]', error)
       return NextResponse.json(
-        { error: `Upload gagal: ${error.message}. Pastikan bucket "uploads" sudah dibuat di Supabase Storage dan diset Public.` },
+        { error: `Upload gagal: ${error.message}` },
         { status: 500 }
       )
     }
 
+    // Get public URL
     const { data: urlData } = supabaseAdmin.storage
       .from('uploads')
       .getPublicUrl(data.path)
 
     return NextResponse.json({ url: urlData.publicUrl })
   } catch (error: any) {
-    console.error('[Upload Exception]', error?.message || error)
+    console.error('[Upload Exception]', error)
     return NextResponse.json(
-      { error: `Upload exception: ${error?.message || 'Unknown error'}` },
+      { error: `Upload error: ${error?.message || 'Unknown'}` },
       { status: 500 }
     )
   }
