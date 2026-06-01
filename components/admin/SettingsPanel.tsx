@@ -1115,6 +1115,57 @@ function MediaTab({
         )}
       </div>
 
+      {/* Intro Sound (Netflix ta-dum) */}
+      <div className="space-y-4 pt-6 border-t border-gray-700">
+        <h4 className="text-md font-semibold text-white">Audio Intro (Netflix Sound)</h4>
+        <p className="text-xs text-gray-400">Audio yang diputar saat tamu klik Buka Undangan (seperti suara Netflix ta-dum)</p>
+        <div className="flex gap-3">
+          <button
+            onClick={() => {
+              const input = document.createElement('input')
+              input.type = 'file'
+              input.accept = 'audio/*'
+              input.onchange = async (e) => {
+                const target = e.target as HTMLInputElement
+                const file = target.files?.[0]
+                if (!file) return
+                setUploading(true)
+                const formData = new FormData()
+                formData.append('file', file)
+                formData.append('folder', 'sounds')
+                try {
+                  const res = await fetch('/api/upload', { method: 'POST', body: formData })
+                  const data = await res.json()
+                  if (res.ok && data.url) {
+                    setSettings((prev) => (prev ? { ...prev, intro_sound_url: data.url } : prev))
+                    setTimeout(() => onSave(), 500)
+                  } else {
+                    alert(data.error || 'Upload gagal')
+                  }
+                } catch {
+                  alert('Upload gagal')
+                } finally {
+                  setUploading(false)
+                }
+              }
+              input.click()
+            }}
+            disabled={uploading}
+            className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+          >
+            {uploading ? 'Mengupload...' : 'Upload Audio Intro'}
+          </button>
+        </div>
+        {settings.intro_sound_url && (
+          <div className="bg-netflix-black rounded-lg p-4">
+            <p className="text-xs text-gray-400 mb-2">Preview Intro Sound:</p>
+            <audio controls className="w-full" src={settings.intro_sound_url}>
+              Browser tidak mendukung audio.
+            </audio>
+          </div>
+        )}
+      </div>
+
       <button
         onClick={onSave}
         disabled={saving}

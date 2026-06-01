@@ -26,8 +26,25 @@ interface Props {
 export function WeddingApp({ guestName, code, category }: Props) {
   const [isOpen, setIsOpen] = useState(false)
   const [isPlaying, setIsPlaying] = useState(false)
+  const [showIntro, setShowIntro] = useState(false)
   const { settings, events, loveStories, gallery, wishes, setWishes, giftAccounts, loading } =
     useWeddingData()
+
+  function handleOpen() {
+    // Play intro sound (Netflix ta-dum) then show content
+    const soundUrl = settings?.intro_sound_url || '/sounds/netflix-tadum.mp3'
+    const audio = new Audio(soundUrl)
+    audio.volume = 0.7
+    audio.play().catch(() => {})
+    
+    setShowIntro(true)
+    // Show Netflix intro animation for 3 seconds, then open
+    setTimeout(() => {
+      setShowIntro(false)
+      setIsOpen(true)
+      setIsPlaying(true)
+    }, 3000)
+  }
 
   if (loading) {
     return (
@@ -38,16 +55,39 @@ export function WeddingApp({ guestName, code, category }: Props) {
     )
   }
 
-  if (!isOpen) {
+  if (!isOpen && !showIntro) {
     return (
       <OpeningSection
         guestName={guestName}
         settings={settings}
-        onOpen={() => {
-          setIsOpen(true)
-          setIsPlaying(true)
-        }}
+        onOpen={handleOpen}
       />
+    )
+  }
+
+  // Netflix intro animation (ta-dum screen) - plays after user clicks "Buka Undangan"
+  if (showIntro) {
+    return (
+      <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
+        <motion.div
+          initial={{ scale: 0.3, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 1.5, ease: [0.25, 0.1, 0.25, 1] }}
+          className="text-center"
+        >
+          <span className="text-netflix-red text-8xl sm:text-9xl font-black inline-block">
+            N
+          </span>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1 }}
+          className="mt-6"
+        >
+          <div className="w-8 h-8 border-4 border-netflix-red border-t-transparent rounded-full animate-spin" />
+        </motion.div>
+      </div>
     )
   }
 

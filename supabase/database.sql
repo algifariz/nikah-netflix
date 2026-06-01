@@ -34,6 +34,7 @@ CREATE TABLE settings (
   hashtag VARCHAR(200) DEFAULT '#AhmadAisyah2024',
   wedding_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() + INTERVAL '30 days',
   music_url TEXT,
+  intro_sound_url TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

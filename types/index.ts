@@ -78,6 +78,7 @@ export interface Settings {
   hashtag: string
   wedding_date: string
   music_url?: string
+  intro_sound_url?: string
 }
 
 export interface DashboardStats {
