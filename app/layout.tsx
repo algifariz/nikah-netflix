@@ -1,63 +1,52 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { SessionProvider } from '@/components/providers/SessionProvider'
-import { supabaseAdmin } from '@/lib/supabase/server'
+
+function getMetadataBaseUrl(): URL {
+  // Priority: NEXT_PUBLIC_URL > VERCEL_URL (auto-set by Vercel) > NEXTAUTH_URL > fallback
+  if (process.env.NEXT_PUBLIC_URL) {
+    const url = process.env.NEXT_PUBLIC_URL.startsWith('http')
+      ? process.env.NEXT_PUBLIC_URL
+      : `https://${process.env.NEXT_PUBLIC_URL}`
+    return new URL(url)
+  }
+  if (process.env.VERCEL_URL) {
+    return new URL(`https://${process.env.VERCEL_URL}`)
+  }
+  if (process.env.NEXTAUTH_URL) {
+    return new URL(process.env.NEXTAUTH_URL)
+  }
+  return new URL('https://your-domain.vercel.app')
+}
 
 export async function generateMetadata(): Promise<Metadata> {
-  try {
-    const { data } = await supabaseAdmin.from('settings').select('groom_name, bride_name').single()
-    const title = data
-      ? `${data.groom_name} & ${data.bride_name} - Wedding Invitation`
-      : 'Wedding Invitation'
-    return {
-      metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://your-domain.vercel.app'),
-      title,
-      description: 'You are invited to our wedding celebration',
-      openGraph: {
-        title,
-        description: 'You are invited to our wedding celebration',
-        type: 'website',
-        images: [
-          {
-            url: '/ai.png',
-            width: 1200,
-            height: 630,
-            alt: title,
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title,
-        description: 'You are invited to our wedding celebration',
-        images: ['/ai.png'],
-      },
-    }
-  } catch {
-    return {
-      metadataBase: new URL(process.env.NEXTAUTH_URL || 'https://your-domain.vercel.app'),
+  const metadataBase = getMetadataBaseUrl()
+
+  return {
+    metadataBase,
+    title: 'Wedding Invitation',
+    description: 'You are invited to our wedding celebration',
+    openGraph: {
       title: 'Wedding Invitation',
       description: 'You are invited to our wedding celebration',
-      openGraph: {
-        title: 'Wedding Invitation',
-        description: 'You are invited to our wedding celebration',
-        type: 'website',
-        images: [
-          {
-            url: '/ai.png',
-            width: 1200,
-            height: 630,
-            alt: 'Wedding Invitation',
-          },
-        ],
-      },
-      twitter: {
-        card: 'summary_large_image',
-        title: 'Wedding Invitation',
-        description: 'You are invited to our wedding celebration',
-        images: ['/ai.png'],
-      },
-    }
+      type: 'website',
+      siteName: 'Wedding Invitation',
+      locale: 'id_ID',
+      images: [
+        {
+          url: '/ai.png',
+          width: 1200,
+          height: 630,
+          alt: 'Wedding Invitation',
+        },
+      ],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: 'Wedding Invitation',
+      description: 'You are invited to our wedding celebration',
+      images: ['/ai.png'],
+    },
   }
 }
 
