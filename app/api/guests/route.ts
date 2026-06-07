@@ -4,21 +4,49 @@ import { authOptions } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 import { generateInvitationCode, getBaseUrl } from '@/lib/utils'
 
-export async function GET() {
+export async function GET(req: NextRequest) {
   const session = await getServerSession(authOptions)
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
   try {
-    const { data, error } = await supabaseAdmin
-      .from('guests')
-      .select('*')
+    const { searchParams } = new URL(req.url)
+    const search = searchParams.get('search') || ''
+    const page = Math.max(1, parseInt(searchParams.get('page') || '1', 10))
+    const limit = Math.max(1, Math.min(100, parseInt(searchParams.get('limit') || '15', 10)))
+    const offset = (page - 1) * limit
+
+    // Build query for count and data
+    let countQuery = supabaseAdmin.from('guests').select('*', { count: 'exact', head: true })
+    let dataQuery = supabaseAdmin.from('guests').select('*')
+
+    if (search) {
+      const searchFilter = `%${search}%`
+      countQuery = countQuery.or(`name.ilike.${searchFilter},phone.ilike.${searchFilter}`)
+      dataQuery = dataQuery.or(`name.ilike.${searchFilter},phone.ilike.${searchFilter}`)
+    }
+
+    const { count, error: countError } = await countQuery
+    if (countError) {
+      console.error('[API /guests GET] count error:', countError.message)
+      return NextResponse.json({ error: countError.message }, { status: 500 })
+    }
+
+    const { data, error } = await dataQuery
       .order('created_at', { ascending: false })
+      .range(offset, offset + limit - 1)
 
     if (error) {
       console.error('[API /guests GET]', error.message)
       return NextResponse.json({ error: error.message }, { status: 500 })
     }
-    return NextResponse.json(data || [])
+
+    return NextResponse.json({
+      guests: data || [],
+      total: count || 0,
+      page,
+      limit,
+      totalPages: Math.ceil((count || 0) / limit),
+    })
   } catch (err: any) {
     console.error('[API /guests GET] Exception:', err.message)
     return NextResponse.json({ error: err.message || 'Internal Server Error' }, { status: 500 })
