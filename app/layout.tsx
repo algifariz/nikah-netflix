@@ -18,13 +18,13 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'id_ID',
       images: [
         {
-          url: toAbsoluteUrl('/og-image.png'),
+          url: toAbsoluteUrl('/og-image.jpg'),
           width: 1200,
           height: 630,
           alt: 'Wedding Invitation',
         },
         {
-          url: toAbsoluteUrl('/og-image-square.png'),
+          url: toAbsoluteUrl('/og-image-square.jpg'),
           width: 400,
           height: 400,
           alt: 'Wedding Invitation',
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Wedding Invitation',
       description: 'You are invited to our wedding celebration',
       images: [
-        toAbsoluteUrl('/og-image.png'),
+        toAbsoluteUrl('/og-image.jpg'),
       ],
     },
   }
