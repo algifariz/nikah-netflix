@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { SessionProvider } from '@/components/providers/SessionProvider'
-import { getBaseUrl } from '@/lib/utils'
+import { getBaseUrl, toAbsoluteUrl } from '@/lib/utils'
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataBase = new URL(getBaseUrl())
@@ -18,13 +18,13 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'id_ID',
       images: [
         {
-          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop',
+          url: toAbsoluteUrl('/og-image.png'),
           width: 1200,
           height: 630,
           alt: 'Wedding Invitation',
         },
         {
-          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=400&fit=crop',
+          url: toAbsoluteUrl('/og-image-square.png'),
           width: 400,
           height: 400,
           alt: 'Wedding Invitation',
@@ -36,7 +36,7 @@ export async function generateMetadata(): Promise<Metadata> {
       title: 'Wedding Invitation',
       description: 'You are invited to our wedding celebration',
       images: [
-        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop',
+        toAbsoluteUrl('/og-image.png'),
       ],
     },
   }

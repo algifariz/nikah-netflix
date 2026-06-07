@@ -24,8 +24,8 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         title: 'Wedding Invitation - Preview',
         description: 'You are invited to our wedding celebration',
         images: [
-          { url: toAbsoluteUrl('/ai.png'), width: 1200, height: 630, alt: 'Wedding Invitation' },
-          { url: toAbsoluteUrl('/ai.png'), width: 400, height: 400, alt: 'Wedding Invitation' },
+          { url: toAbsoluteUrl('/og-image.png'), width: 1200, height: 630, alt: 'Wedding Invitation' },
+          { url: toAbsoluteUrl('/og-image-square.png'), width: 400, height: 400, alt: 'Wedding Invitation' },
         ],
       },
       twitter: {
@@ -48,7 +48,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : 'Wedding Invitation'
   const title = settings?.og_title || `Wedding Invitation - ${coupleName}`
   const description = settings?.og_description || 'Kami mengundang Anda untuk hadir di acara pernikahan kami'
-  const ogImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/ai.png')
+
+  const landscapeImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/og-image.png')
+  const squareImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/og-image-square.png')
 
   return {
     metadataBase,
@@ -62,13 +64,13 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       locale: 'id_ID',
       images: [
         {
-          url: ogImage,
+          url: landscapeImage,
           width: 1200,
           height: 630,
           alt: coupleName,
         },
         {
-          url: ogImage,
+          url: squareImage,
           width: 400,
           height: 400,
           alt: coupleName,
@@ -79,7 +81,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       card: 'summary_large_image',
       title,
       description,
-      images: [ogImage],
+      images: [landscapeImage],
     },
   }
 }
