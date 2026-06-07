@@ -1,26 +1,10 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import { SessionProvider } from '@/components/providers/SessionProvider'
-
-function getMetadataBaseUrl(): URL {
-  // Priority: NEXT_PUBLIC_URL > VERCEL_URL (auto-set by Vercel) > NEXTAUTH_URL > fallback
-  if (process.env.NEXT_PUBLIC_URL) {
-    const url = process.env.NEXT_PUBLIC_URL.startsWith('http')
-      ? process.env.NEXT_PUBLIC_URL
-      : `https://${process.env.NEXT_PUBLIC_URL}`
-    return new URL(url)
-  }
-  if (process.env.VERCEL_URL) {
-    return new URL(`https://${process.env.VERCEL_URL}`)
-  }
-  if (process.env.NEXTAUTH_URL) {
-    return new URL(process.env.NEXTAUTH_URL)
-  }
-  return new URL('https://your-domain.vercel.app')
-}
+import { getBaseUrl } from '@/lib/utils'
 
 export async function generateMetadata(): Promise<Metadata> {
-  const metadataBase = getMetadataBaseUrl()
+  const metadataBase = new URL(getBaseUrl())
 
   return {
     metadataBase,

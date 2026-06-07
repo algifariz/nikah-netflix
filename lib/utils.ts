@@ -21,7 +21,25 @@ export function formatDate(date: string, locale = 'id-ID'): string {
 }
 
 export function getBaseUrl(): string {
-  if (typeof window !== 'undefined') return ''
-  if (process.env.NEXTAUTH_URL) return process.env.NEXTAUTH_URL
+  if (process.env.NEXT_PUBLIC_URL) {
+    const url = process.env.NEXT_PUBLIC_URL.startsWith('http')
+      ? process.env.NEXT_PUBLIC_URL
+      : `https://${process.env.NEXT_PUBLIC_URL}`
+    return url.replace(/\/$/, '')
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`
+  }
+  if (process.env.NEXTAUTH_URL) {
+    return process.env.NEXTAUTH_URL.replace(/\/$/, '')
+  }
   return 'http://localhost:3000'
+}
+
+export function toAbsoluteUrl(url: string): string {
+  if (!url) return url
+  if (url.startsWith('http://') || url.startsWith('https://')) return url
+  const base = getBaseUrl()
+  if (!base) return url
+  return `${base}${url.startsWith('/') ? '' : '/'}${url}`
 }

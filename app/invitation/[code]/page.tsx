@@ -2,6 +2,7 @@ import { supabaseAdmin } from '@/lib/supabase/server'
 import { WeddingApp } from '@/components/invitation/WeddingApp'
 import { notFound } from 'next/navigation'
 import type { Metadata } from 'next'
+import { getBaseUrl, toAbsoluteUrl } from '@/lib/utils'
 
 interface Props {
   params: Promise<{ code: string }>
@@ -12,21 +13,23 @@ export const revalidate = 60
 
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { code } = await params
+  const metadataBase = new URL(getBaseUrl())
 
   if (code === 'preview') {
     return {
+      metadataBase,
       title: 'Wedding Invitation - Preview',
       description: 'You are invited to our wedding celebration',
       openGraph: {
         title: 'Wedding Invitation - Preview',
         description: 'You are invited to our wedding celebration',
-        images: [{ url: '/ai.png', width: 1200, height: 630, alt: 'Wedding Invitation' }],
+        images: [{ url: toAbsoluteUrl('/ai.png'), width: 1200, height: 630, alt: 'Wedding Invitation' }],
       },
       twitter: {
         card: 'summary_large_image',
         title: 'Wedding Invitation - Preview',
         description: 'You are invited to our wedding celebration',
-        images: ['/ai.png'],
+        images: [toAbsoluteUrl('/ai.png')],
       },
     }
   }
@@ -42,9 +45,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     : 'Wedding Invitation'
   const title = settings?.og_title || `Wedding Invitation - ${coupleName}`
   const description = settings?.og_description || 'Kami mengundang Anda untuk hadir di acara pernikahan kami'
-  const ogImage = settings?.og_image || settings?.hero_image || '/ai.png'
+  const ogImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/ai.png')
 
   return {
+    metadataBase,
     title,
     description,
     openGraph: {
