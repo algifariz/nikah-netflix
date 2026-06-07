@@ -79,6 +79,9 @@ export interface Settings {
   wedding_date: string
   music_url?: string
   intro_sound_url?: string
+  og_image?: string
+  og_title?: string
+  og_description?: string
 }
 
 export interface DashboardStats {

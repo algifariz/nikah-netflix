@@ -35,6 +35,9 @@ CREATE TABLE settings (
   wedding_date TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW() + INTERVAL '30 days',
   music_url TEXT,
   intro_sound_url TEXT,
+  og_image TEXT,
+  og_title TEXT,
+  og_description TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

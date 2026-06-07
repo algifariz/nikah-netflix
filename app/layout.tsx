@@ -34,7 +34,7 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: 'id_ID',
       images: [
         {
-          url: '/ai.png',
+          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop',
           width: 1200,
           height: 630,
           alt: 'Wedding Invitation',
@@ -45,7 +45,7 @@ export async function generateMetadata(): Promise<Metadata> {
       card: 'summary_large_image',
       title: 'Wedding Invitation',
       description: 'You are invited to our wedding celebration',
-      images: ['/ai.png'],
+      images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop'],
     },
   }
 }

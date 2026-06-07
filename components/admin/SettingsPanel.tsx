@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import type { Settings, Event, GiftAccount, GalleryImage, LoveStory } from '@/types'
 
-type Tab = 'mempelai' | 'acara' | 'lovestory' | 'gallery' | 'amplop' | 'media'
+type Tab = 'mempelai' | 'acara' | 'lovestory' | 'gallery' | 'amplop' | 'media' | 'og'
 
 const inputClass = 'w-full bg-netflix-black border border-netflix-gray/30 rounded-lg p-3 text-sm text-white focus:border-netflix-red focus:outline-none transition'
 
@@ -137,6 +137,7 @@ export function SettingsPanel() {
           ['gallery', 'Gallery'],
           ['amplop', 'Amplop'],
           ['media', 'Media'],
+          ['og', 'OG Preview'],
         ] as [Tab, string][]).map(([key, label]) => (
           <button
             key={key}
@@ -158,6 +159,7 @@ export function SettingsPanel() {
       {activeTab === 'gallery' && <GalleryTab gallery={gallery} setGallery={setGallery} setMessage={setMessage} uploadFile={uploadFile} galleryInputRef={galleryInputRef} />}
       {activeTab === 'amplop' && <AmplopTab giftAccounts={giftAccounts} setGiftAccounts={setGiftAccounts} setMessage={setMessage} />}
       {activeTab === 'media' && settings && <MediaTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} />}
+      {activeTab === 'og' && settings && <OgTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} />}
     </div>
   )
 }
@@ -1032,6 +1034,152 @@ function AmplopTab({
     </div>
   )
 }
+
+// ==================== OG TAB (Social Media Preview) ====================
+
+function OgTab({
+  settings,
+  setSettings,
+  saving,
+  onSave,
+}: {
+  settings: Settings
+  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
+  saving: boolean
+  onSave: () => void
+}) {
+  function update(field: keyof Settings, value: string) {
+    setSettings((prev) => (prev ? { ...prev, [field]: value } : prev))
+  }
+
+  function handleImageUpload() {
+    const input = document.createElement('input')
+    input.type = 'file'
+    input.accept = 'image/*'
+    input.onchange = async (e) => {
+      const target = e.target as HTMLInputElement
+      const file = target.files?.[0]
+      if (!file) return
+      const formData = new FormData()
+      formData.append('file', file)
+      formData.append('folder', 'og')
+      try {
+        const res = await fetch('/api/upload', { method: 'POST', body: formData })
+        const data = await res.json()
+        if (res.ok && data.url) {
+          update('og_image', data.url)
+        } else {
+          alert(data.error || 'Upload gagal')
+        }
+      } catch {
+        alert('Upload gagal')
+      }
+    }
+    input.click()
+  }
+
+  const coupleName = `${settings.groom_name} & ${settings.bride_name}`
+  const ogTitle = settings.og_title || `Wedding Invitation - ${coupleName}`
+  const ogDesc = settings.og_description || 'Kami mengundang Anda untuk hadir di acara pernikahan kami'
+  const ogImage = settings.og_image || settings.hero_image || '/ai.png'
+  const ogUrl = typeof window !== 'undefined' ? `${window.location.origin}/invitation/preview` : '/invitation/preview'
+
+  return (
+    <div className="bg-netflix-dark rounded-xl p-6 space-y-6">
+      <div className="flex items-center justify-between">
+        <h3 className="text-lg font-semibold text-white">Open Graph Settings</h3>
+      </div>
+
+      <p className="text-xs text-gray-400">
+        Sesuaikan tampilan preview link undangan saat di-share ke WhatsApp, Telegram, Facebook, dll.
+        Jika tidak diisi, akan menggunakan data default.
+      </p>
+
+      {/* Preview Card */}
+      <div className="bg-netflix-black rounded-xl overflow-hidden border border-gray-700">
+        <div className="w-full aspect-[1200/630] relative bg-gray-800">
+          {ogImage && (
+            <img
+              src={ogImage}
+              alt="OG Preview"
+              className="w-full h-full object-cover"
+              onError={(e) => {
+                (e.target as HTMLImageElement).style.display = 'none'
+              }}
+            />
+          )}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
+          <div className="absolute bottom-0 left-0 right-0 p-4">
+            <p className="text-white text-xs font-medium uppercase tracking-wider opacity-80">Wedding Invitation</p>
+            <p className="text-white text-lg font-bold mt-1 truncate">{ogTitle}</p>
+            <p className="text-white/70 text-sm mt-1 line-clamp-2">{ogDesc}</p>
+          </div>
+        </div>
+        <div className="p-3 flex items-center gap-3 border-t border-gray-700">
+          <div className="w-4 h-4 bg-netflix-red rounded flex items-center justify-center">
+            <span className="text-white text-[8px] font-black">N</span>
+          </div>
+          <span className="text-gray-400 text-xs truncate">{ogUrl}</span>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">OG Image (1200x630 px — ideal)</label>
+          {settings.og_image && (
+            <img src={settings.og_image} alt="OG Image" className="w-full max-w-sm h-32 rounded-lg object-cover mb-2" />
+          )}
+          <button
+            type="button"
+            onClick={handleImageUpload}
+            className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition"
+          >
+            Upload OG Image
+          </button>
+          <button
+            type="button"
+            onClick={() => update('og_image', '')}
+            className="ml-2 bg-gray-700 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-600 transition"
+          >
+            Hapus
+          </button>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">OG Title</label>
+          <input
+            className={inputClass}
+            value={settings.og_title || ''}
+            onChange={(e) => update('og_title', e.target.value)}
+            placeholder={`Wedding Invitation - ${coupleName}`}
+          />
+          <p className="text-xs text-gray-500 mt-1">Kosongkan untuk menggunakan nama pasangan</p>
+        </div>
+
+        <div>
+          <label className="block text-xs text-gray-400 mb-1">OG Description</label>
+          <textarea
+            className={inputClass}
+            rows={3}
+            value={settings.og_description || ''}
+            onChange={(e) => update('og_description', e.target.value)}
+            placeholder="Kami mengundang Anda untuk hadir di acara pernikahan kami"
+          />
+          <p className="text-xs text-gray-500 mt-1">Maksimal ~200 karakter untuk preview optimal</p>
+        </div>
+      </div>
+
+      <button
+        onClick={onSave}
+        disabled={saving}
+        className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+      >
+        {saving ? 'Menyimpan...' : 'Simpan'}
+      </button>
+    </div>
+  )
+}
+
 
 // ==================== MEDIA TAB ====================
 
