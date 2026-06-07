@@ -15,9 +15,41 @@ export async function POST(req: NextRequest) {
   try {
     const { guest_name, message } = await req.json()
 
+    // Validate name is not empty
+    if (!guest_name || !guest_name.trim()) {
+      return NextResponse.json(
+        { error: 'Nama tamu tidak boleh kosong' },
+        { status: 400 }
+      )
+    }
+
+    // Validate message is not empty
+    if (!message || !message.trim()) {
+      return NextResponse.json(
+        { error: 'Pesan tidak boleh kosong' },
+        { status: 400 }
+      )
+    }
+
+    // Check if guest exists in database
+    const { data: existingGuest, error: guestError } = await supabaseAdmin
+      .from('guests')
+      .select('id, name')
+      .ilike('name', guest_name.trim())
+      .maybeSingle()
+
+    if (guestError) throw guestError
+
+    if (!existingGuest) {
+      return NextResponse.json(
+        { error: 'Maaf, nama Anda tidak terdaftar sebagai tamu undangan' },
+        { status: 403 }
+      )
+    }
+
     const { data, error } = await supabaseAdmin
       .from('wishes')
-      .insert({ guest_name, message })
+      .insert({ guest_name: guest_name.trim(), message: message.trim() })
       .select()
       .single()
 
@@ -25,6 +57,7 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(data)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to save wish' }, { status: 500 })
+    console.error('[API /wishes POST]', error)
+    return NextResponse.json({ error: 'Gagal menyimpan ucapan' }, { status: 500 })
   }
 }

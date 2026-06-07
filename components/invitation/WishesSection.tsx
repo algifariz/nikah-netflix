@@ -11,27 +11,48 @@ interface Props {
 }
 
 export function WishesSection({ wishes, setWishes, guestName }: Props) {
+  const [name, setName] = useState(guestName || '')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    if (!message.trim()) return
+    setError('')
+
+    if (!name.trim()) {
+      setError('Silakan masukkan nama Anda terlebih dahulu')
+      return
+    }
+
+    if (!message.trim()) {
+      setError('Silakan tulis ucapan & doa untuk kedua mempelai')
+      return
+    }
+
     setLoading(true)
 
     try {
       const res = await fetch('/api/wishes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ guest_name: guestName, message }),
+        body: JSON.stringify({ guest_name: name.trim(), message: message.trim() }),
       })
+
       const data = await res.json()
+
+      if (!res.ok) {
+        setError(data.error || 'Gagal mengirim ucapan')
+        return
+      }
+
       if (data && data.id) {
         setWishes([data, ...wishes])
       }
       setMessage('')
     } catch (error) {
       console.error('Wish error:', error)
+      setError('Terjadi kesalahan. Silakan coba lagi.')
     } finally {
       setLoading(false)
     }
@@ -65,18 +86,44 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
         onSubmit={handleSubmit}
         className="max-w-md mx-auto mb-8"
       >
+        <input
+          type="text"
+          value={name}
+          onChange={(e) => {
+            setName(e.target.value)
+            if (error) setError('')
+          }}
+          placeholder="Masukkan nama Anda..."
+          className="w-full bg-netflix-dark border border-netflix-gray/30 rounded-xl p-4 text-sm text-white placeholder-netflix-light/30 focus:border-netflix-red focus:outline-none transition-colors mb-3"
+        />
+
         <textarea
           value={message}
-          onChange={(e) => setMessage(e.target.value)}
+          onChange={(e) => {
+            setMessage(e.target.value)
+            if (error) setError('')
+          }}
           placeholder="Tulis ucapan & doa untuk kedua mempelai..."
           rows={3}
           className="w-full bg-netflix-dark border border-netflix-gray/30 rounded-xl p-4 text-sm text-white placeholder-netflix-light/30 resize-none focus:border-netflix-red focus:outline-none transition-colors"
         />
+
+        {/* Error message */}
+        {error && (
+          <motion.p
+            initial={{ opacity: 0, y: -5 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-red-400 text-xs mt-2 text-center"
+          >
+            {error}
+          </motion.p>
+        )}
+
         <motion.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="submit"
-          disabled={!message.trim() || loading}
+          disabled={loading}
           className="netflix-btn w-full mt-3 disabled:opacity-50 disabled:cursor-not-allowed text-sm sm:text-base"
         >
           {loading ? (
@@ -93,6 +140,11 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
       {/* Wishes list */}
       <div className="max-w-md mx-auto space-y-3 max-h-[400px] overflow-y-auto pr-1">
         <AnimatePresence>
+          {wishes.length === 0 && (
+            <p className="text-center text-netflix-light/30 text-sm py-8">
+              Belum ada ucapan. Jadilah yang pertama!
+            </p>
+          )}
           {wishes.map((wish, i) => (
             <motion.div
               key={wish.id}

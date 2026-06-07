@@ -60,18 +60,21 @@ export function GuestManager() {
 
     return `Kepada Yth.
 Bapak/Ibu/Saudara/i
-*${guest.name}*
-______________
+${guest.name}
+
+Assalamualaikum Warahmatullahi Wabarakatuh
 
 Tanpa mengurangi rasa hormat, perkenankan kami mengundang Bapak/Ibu/Saudara/i, teman sekaligus sahabat, untuk menghadiri acara pernikahan kami.
 
-Berikut link undangan kami, untuk info lengkap dari acara, bisa kunjungi:
+Berikut link undangan kami, untuk info lengkap mengenai acara dapat dikunjungi melalui tautan di bawah ini:
 
-${invitationLink}
+👉 ${invitationLink}
 
-Hasil maksimal buka lewat browser chrome/safari.
+(Catatan: Untuk tampilan maksimal, disarankan membuka link melalui browser Chrome atau Safari).
 
-Merupakan suatu kebahagiaan bagi kami apabila Bapak/Ibu/Saudara/i berkenan untuk hadir dan memberikan doa restu.
+Merupakan suatu kebahagiaan dan kehormatan bagi kami apabila Bapak/Ibu/Saudara/i berkenan hadir untuk memberikan doa restu kepada kedua mempelai.
+
+Wassalamualaikum Warahmatullahi Wabarakatuh
 
 Terima Kasih`
   }
