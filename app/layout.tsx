@@ -23,13 +23,21 @@ export async function generateMetadata(): Promise<Metadata> {
           height: 630,
           alt: 'Wedding Invitation',
         },
+        {
+          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=400&fit=crop',
+          width: 400,
+          height: 400,
+          alt: 'Wedding Invitation',
+        },
       ],
     },
     twitter: {
       card: 'summary_large_image',
       title: 'Wedding Invitation',
       description: 'You are invited to our wedding celebration',
-      images: ['https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop'],
+      images: [
+        'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=630&fit=crop',
+      ],
     },
   }
 }

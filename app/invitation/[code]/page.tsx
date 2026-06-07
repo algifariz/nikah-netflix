@@ -23,7 +23,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: 'Wedding Invitation - Preview',
         description: 'You are invited to our wedding celebration',
-        images: [{ url: toAbsoluteUrl('/ai.png'), width: 1200, height: 630, alt: 'Wedding Invitation' }],
+        images: [
+          { url: toAbsoluteUrl('/ai.png'), width: 1200, height: 630, alt: 'Wedding Invitation' },
+          { url: toAbsoluteUrl('/ai.png'), width: 400, height: 400, alt: 'Wedding Invitation' },
+        ],
       },
       twitter: {
         card: 'summary_large_image',
@@ -62,6 +65,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
           url: ogImage,
           width: 1200,
           height: 630,
+          alt: coupleName,
+        },
+        {
+          url: ogImage,
+          width: 400,
+          height: 400,
           alt: coupleName,
         },
       ],
