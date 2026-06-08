@@ -23,9 +23,27 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title: 'Wedding Invitation - Preview',
         description: 'You are invited to our wedding celebration',
+        url: toAbsoluteUrl('/invitation/preview'),
+        siteName: 'Wedding Invitation',
+        locale: 'id_ID',
+        type: 'website',
         images: [
-          { url: toAbsoluteUrl('/og-image.jpg'), width: 1200, height: 630, alt: 'Wedding Invitation' },
-          { url: toAbsoluteUrl('/og-image-square.jpg'), width: 400, height: 400, alt: 'Wedding Invitation' },
+          {
+            url: toAbsoluteUrl('/og-image.jpg'),
+            secureUrl: toAbsoluteUrl('/og-image.jpg'),
+            width: 1200,
+            height: 630,
+            alt: 'Wedding Invitation',
+            type: 'image/jpeg',
+          },
+          {
+            url: toAbsoluteUrl('/og-image-square.jpg'),
+            secureUrl: toAbsoluteUrl('/og-image-square.jpg'),
+            width: 400,
+            height: 400,
+            alt: 'Wedding Invitation',
+            type: 'image/jpeg',
+          },
         ],
       },
       twitter: {
@@ -52,35 +70,44 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const landscapeImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/og-image.jpg')
   const squareImage = toAbsoluteUrl(settings?.og_image || settings?.hero_image || '/og-image-square.jpg')
 
+  // Truncate for WhatsApp: title max ~65 chars, description max ~155 chars
+  const waTitle = title.length > 60 ? title.slice(0, 57) + '...' : title
+  const waDescription = description.length > 150 ? description.slice(0, 147) + '...' : description
+
   return {
     metadataBase,
     title,
     description,
     openGraph: {
-      title,
-      description,
+      title: waTitle,
+      description: waDescription,
+      url: toAbsoluteUrl(`/invitation/${code}`),
       type: 'website',
       siteName: 'Wedding Invitation',
       locale: 'id_ID',
       images: [
         {
           url: landscapeImage,
+          secureUrl: landscapeImage,
           width: 1200,
           height: 630,
           alt: coupleName,
+          type: 'image/jpeg',
         },
         {
           url: squareImage,
+          secureUrl: squareImage,
           width: 400,
           height: 400,
           alt: coupleName,
+          type: 'image/jpeg',
         },
       ],
     },
     twitter: {
       card: 'summary_large_image',
-      title,
-      description,
+      title: waTitle,
+      description: waDescription,
       images: [landscapeImage],
     },
   }
