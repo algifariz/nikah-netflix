@@ -1,3 +1,33 @@
+export function detectInAppBrowser(): boolean {
+  if (typeof window === 'undefined') return false
+
+  const ua = navigator.userAgent.toLowerCase()
+
+  // WhatsApp in-app browser
+  if (ua.includes('whatsapp')) return true
+
+  // Telegram in-app browser
+  if (ua.includes('telegram')) return true
+
+  // Facebook / Messenger in-app browser
+  if (ua.includes('fb') && (ua.includes('fbav') || ua.includes('fban'))) return true
+  if (ua.includes('messenger')) return true
+
+  // Instagram in-app browser
+  if (ua.includes('instagram')) return true
+
+  // LINE in-app browser
+  if (ua.includes('line/')) return true
+
+  // Twitter/X in-app browser
+  if (ua.includes('twitter')) return true
+
+  // TikTok in-app browser
+  if (ua.includes('tiktok')) return true
+
+  return false
+}
+
 export function cn(...classes: (string | undefined | null | false)[]) {
   return classes.filter(Boolean).join(' ')
 }

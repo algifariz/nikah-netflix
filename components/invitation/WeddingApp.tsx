@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { motion } from 'framer-motion'
 import { useWeddingData } from '@/hooks/useWeddingData'
+import { detectInAppBrowser } from '@/lib/utils'
 import { OpeningSection } from './OpeningSection'
 import { HeroSection } from './HeroSection'
 import { CoupleSection } from './CoupleSection'
@@ -30,13 +31,13 @@ export function WeddingApp({ guestName, code, category }: Props) {
   const { settings, events, loveStories, gallery, wishes, setWishes, giftAccounts, loading } =
     useWeddingData()
 
-  function handleOpen() {
+  const handleOpen = useCallback(() => {
     // Play intro sound (Netflix ta-dum) then show content
     const soundUrl = settings?.intro_sound_url || '/sounds/netflix-tadum.mp3'
     const audio = new Audio(soundUrl)
     audio.volume = 0.7
     audio.play().catch(() => {})
-    
+
     setShowIntro(true)
     // Show Netflix intro animation for 3 seconds, then open
     setTimeout(() => {
@@ -44,7 +45,22 @@ export function WeddingApp({ guestName, code, category }: Props) {
       setIsOpen(true)
       setIsPlaying(true)
     }, 3000)
-  }
+  }, [settings?.intro_sound_url])
+
+  // Ref untuk akses handleOpen dari useEffect tanpa dependency issues
+  const handleOpenRef = useRef(handleOpen)
+  handleOpenRef.current = handleOpen
+
+  // Auto-open saat dibuka dari in-app browser (WhatsApp, Telegram, dll)
+  useEffect(() => {
+    if (loading) return
+    if (detectInAppBrowser()) {
+      const timer = setTimeout(() => {
+        handleOpenRef.current()
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, [loading])
 
   if (loading) {
     return (
@@ -109,7 +125,7 @@ export function WeddingApp({ guestName, code, category }: Props) {
       </motion.nav>
 
       <MusicPlayer musicUrl={settings?.music_url} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
-      
+
       <HeroSection settings={settings} />
       <CoupleSection settings={settings} />
       <CountdownSection weddingDate={settings?.wedding_date} />
