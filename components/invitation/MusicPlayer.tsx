@@ -1,6 +1,6 @@
 'use client'
 
-import { useRef, useEffect, useEffectEvent } from 'react'
+import { useRef, useEffect } from 'react'
 import { m } from 'framer-motion'
 
 interface Props {
@@ -13,19 +13,20 @@ export function MusicPlayer({ musicUrl, isPlaying, setIsPlaying }: Props) {
   const audioRef = useRef<HTMLAudioElement>(null)
   const hasTriedPlay = useRef(false)
 
-  const onTryPlay = useEffectEvent(() => {
+  const onTryPlayRef = useRef<() => void>(() => {})
+  onTryPlayRef.current = () => {
     if (!audioRef.current || !musicUrl) return
     audioRef.current.play().then(() => {
       hasTriedPlay.current = true
     }).catch(() => {
       setIsPlaying(false)
     })
-  })
+  }
 
   useEffect(() => {
     if (!audioRef.current || !musicUrl) return
     if (isPlaying) {
-      onTryPlay()
+      onTryPlayRef.current()
     } else {
       audioRef.current.pause()
     }
@@ -34,7 +35,7 @@ export function MusicPlayer({ musicUrl, isPlaying, setIsPlaying }: Props) {
   useEffect(() => {
     function handleInteraction() {
       if (isPlaying && audioRef.current && audioRef.current.paused && musicUrl) {
-        onTryPlay()
+        onTryPlayRef.current()
       }
     }
     document.addEventListener('click', handleInteraction, { once: true })
