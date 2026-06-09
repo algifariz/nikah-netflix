@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 
 export default function LoginPage() {
@@ -16,17 +16,18 @@ export default function LoginPage() {
     setLoading(true)
     setError('')
 
-    const result = await signIn('credentials', {
+    const supabase = createClient()
+    const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
-      redirect: false,
     })
 
-    if (result?.error) {
+    if (error) {
       setError('Email atau password salah')
       setLoading(false)
     } else {
       router.push('/admin')
+      router.refresh()
     }
   }
 
@@ -54,6 +55,7 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="Email"
+                aria-label="Email"
                 required
                 className="w-full bg-netflix-gray border border-netflix-gray rounded p-3 text-sm text-white placeholder-netflix-light/30 focus:border-netflix-red focus:outline-none"
               />
@@ -64,6 +66,7 @@ export default function LoginPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Password"
+                aria-label="Password"
                 required
                 className="w-full bg-netflix-gray border border-netflix-gray rounded p-3 text-sm text-white placeholder-netflix-light/30 focus:border-netflix-red focus:outline-none"
               />

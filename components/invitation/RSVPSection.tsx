@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 
 interface Props {
   code: string
@@ -39,40 +39,40 @@ export function RSVPSection({ code, guestName }: Props) {
   if (submitted) {
     return (
       <section className="netflix-section text-center">
-        <motion.div
+        <m.div
           initial={{ scale: 0.8, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ type: 'spring', stiffness: 200 }}
           className="bg-netflix-dark rounded-xl p-8 max-w-md mx-auto border border-netflix-gray/20"
         >
-          <motion.div
-            initial={{ scale: 0 }}
+          <m.div
+            initial={{ scale: 0.95 }}
             animate={{ scale: 1 }}
             transition={{ delay: 0.2, type: 'spring' }}
             className="text-5xl mb-4"
           >
             🎉
-          </motion.div>
+          </m.div>
           <h3 className="text-xl font-bold mb-2">Terima Kasih!</h3>
           <p className="text-netflix-light/60 text-sm">
             Konfirmasi kehadiran Anda telah kami terima.
           </p>
-        </motion.div>
+        </m.div>
       </section>
     )
   }
 
   return (
     <section className="netflix-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="font-serif text-3xl sm:text-4xl font-bold text-center mb-3"
       >
         RSVP
-      </motion.h2>
-      <motion.p
+      </m.h2>
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -80,9 +80,9 @@ export function RSVPSection({ code, guestName }: Props) {
         className="text-center text-netflix-light/40 text-sm mb-8"
       >
         Konfirmasi kehadiran Anda
-      </motion.p>
+      </m.p>
 
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 30 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -96,7 +96,7 @@ export function RSVPSection({ code, guestName }: Props) {
 
         {/* Attendance options */}
         <div className="space-y-3 mb-6">
-          <motion.button
+          <m.button
             whileTap={{ scale: 0.98 }}
             onClick={() => setStatus('attending')}
             className={`w-full p-3 sm:p-4 rounded-lg border text-left text-sm transition-all duration-300 ${
@@ -117,8 +117,8 @@ export function RSVPSection({ code, guestName }: Props) {
               </span>
               Ya, saya akan hadir
             </span>
-          </motion.button>
-          <motion.button
+          </m.button>
+          <m.button
             whileTap={{ scale: 0.98 }}
             onClick={() => setStatus('not_attending')}
             className={`w-full p-3 sm:p-4 rounded-lg border text-left text-sm transition-all duration-300 ${
@@ -139,19 +139,19 @@ export function RSVPSection({ code, guestName }: Props) {
               </span>
               Maaf, saya tidak bisa hadir
             </span>
-          </motion.button>
+          </m.button>
         </div>
 
         {/* Number of guests */}
         {status === 'attending' && (
-          <motion.div
+          <m.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             transition={{ duration: 0.3 }}
             className="mb-6"
           >
-            <label className="text-sm text-netflix-light/60 block mb-2">Jumlah Tamu</label>
-            <select
+            <label htmlFor="rsvp_catagory" className="text-sm text-netflix-light/60 block mb-2">Jumlah Tamu</label>
+            <select id="rsvp_catagory" aria-label="RSVP"
               value={guests}
               onChange={(e) => setGuests(Number(e.target.value))}
               className="w-full bg-netflix-black border border-netflix-gray/30 rounded-lg p-3 text-sm text-white focus:border-netflix-red focus:outline-none transition"
@@ -162,10 +162,10 @@ export function RSVPSection({ code, guestName }: Props) {
                 </option>
               ))}
             </select>
-          </motion.div>
+          </m.div>
         )}
 
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleSubmit}
@@ -180,8 +180,8 @@ export function RSVPSection({ code, guestName }: Props) {
           ) : (
             'Konfirmasi Kehadiran'
           )}
-        </motion.button>
-      </motion.div>
+        </m.button>
+      </m.div>
     </section>
   )
 }

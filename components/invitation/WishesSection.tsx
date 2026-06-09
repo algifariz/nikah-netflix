@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion, AnimatePresence } from 'framer-motion'
+import { m, AnimatePresence } from 'framer-motion'
 import type { Wish } from '@/types'
 
 interface Props {
@@ -60,15 +60,15 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
 
   return (
     <section className="netflix-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="font-serif text-3xl sm:text-4xl font-bold text-center mb-3"
       >
         Wedding Wishes
-      </motion.h2>
-      <motion.p
+      </m.h2>
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -76,17 +76,17 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
         className="text-center text-netflix-light/40 text-sm mb-8"
       >
         Ucapan &amp; doa untuk kedua mempelai
-      </motion.p>
+      </m.p>
 
       {/* Form */}
-      <motion.form
+      <m.form
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         onSubmit={handleSubmit}
         className="max-w-md mx-auto mb-8"
       >
-        <input
+        <input aria-label="input"
           type="text"
           value={name}
           onChange={(e) => {
@@ -97,7 +97,7 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
           className="w-full bg-netflix-dark border border-netflix-gray/30 rounded-xl p-4 text-sm text-white placeholder-netflix-light/30 focus:border-netflix-red focus:outline-none transition-colors mb-3"
         />
 
-        <textarea
+        <textarea aria-label="message"
           value={message}
           onChange={(e) => {
             setMessage(e.target.value)
@@ -110,16 +110,16 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
 
         {/* Error message */}
         {error && (
-          <motion.p
+          <m.p
             initial={{ opacity: 0, y: -5 }}
             animate={{ opacity: 1, y: 0 }}
             className="text-red-400 text-xs mt-2 text-center"
           >
             {error}
-          </motion.p>
+          </m.p>
         )}
 
-        <motion.button
+        <m.button
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           type="submit"
@@ -134,8 +134,8 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
           ) : (
             'Kirim Ucapan'
           )}
-        </motion.button>
-      </motion.form>
+        </m.button>
+      </m.form>
 
       {/* Wishes list */}
       <div className="max-w-md mx-auto space-y-3 max-h-[400px] overflow-y-auto pr-1">
@@ -146,7 +146,7 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
             </p>
           )}
           {wishes.map((wish, i) => (
-            <motion.div
+            <m.div
               key={wish.id}
               initial={{ opacity: 0, y: 20, scale: 0.95 }}
               animate={{ opacity: 1, y: 0, scale: 1 }}
@@ -163,7 +163,7 @@ export function WishesSection({ wishes, setWishes, guestName }: Props) {
               <p className="text-netflix-light/60 text-xs sm:text-sm leading-relaxed pl-[42px]">
                 {wish.message}
               </p>
-            </motion.div>
+            </m.div>
           ))}
         </AnimatePresence>
       </div>

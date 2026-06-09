@@ -168,7 +168,7 @@ export function QRScannerModal({ onClose }: Props) {
       <div className="bg-netflix-dark rounded-xl w-full max-w-sm p-5">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-lg font-bold">QR Scanner</h3>
-          <button
+          <button type="button"
             onClick={handleClose}
             className="w-8 h-8 rounded-full bg-netflix-gray/30 flex items-center justify-center text-netflix-light/50 hover:text-white hover:bg-netflix-gray/50 transition"
           >
@@ -196,13 +196,14 @@ export function QRScannerModal({ onClose }: Props) {
 
             <div className="flex gap-2">
               <input
+                aria-label="Manual code input"
                 value={manualCode}
                 onChange={(e) => setManualCode(e.target.value)}
                 placeholder="Atau masukkan kode manual"
                 className="flex-1 bg-netflix-black border border-netflix-gray/30 rounded-lg p-2.5 text-sm text-white focus:border-netflix-red focus:outline-none"
                 onKeyDown={(e) => e.key === 'Enter' && handleManualScan()}
               />
-              <button onClick={handleManualScan} className="netflix-btn text-sm px-4">
+              <button aria-label="Close" type="button" onClick={handleManualScan} className="netflix-btn text-sm px-4">
                 Cek
               </button>
             </div>
@@ -241,10 +242,10 @@ export function QRScannerModal({ onClose }: Props) {
               <p className="text-yellow-400 text-sm mt-2">{result.warning}</p>
             )}
             <div className="flex gap-2 mt-6">
-              <button onClick={handleScanAgain} className="netflix-btn flex-1">
+              <button type="button" onClick={handleScanAgain} className="netflix-btn flex-1">
                 Scan Lagi
               </button>
-              <button onClick={handleClose} className="flex-1 px-4 py-3 rounded bg-netflix-gray/30 text-white text-sm font-bold hover:bg-netflix-gray/50 transition">
+              <button type="button" onClick={handleClose} className="flex-1 px-4 py-3 rounded bg-netflix-gray/30 text-white text-sm font-bold hover:bg-netflix-gray/50 transition">
                 Tutup
               </button>
             </div>
@@ -256,10 +257,10 @@ export function QRScannerModal({ onClose }: Props) {
             <div className="text-5xl mb-4">❌</div>
             <p className="text-red-400 mb-4 text-sm">{error}</p>
             <div className="flex gap-2">
-              <button onClick={handleScanAgain} className="netflix-btn flex-1">
+              <button type="button" onClick={handleScanAgain} className="netflix-btn flex-1">
                 Coba Lagi
               </button>
-              <button onClick={handleClose} className="flex-1 px-4 py-3 rounded bg-netflix-gray/30 text-white text-sm font-bold hover:bg-netflix-gray/50 transition">
+              <button type="button" onClick={handleClose} className="flex-1 px-4 py-3 rounded bg-netflix-gray/30 text-white text-sm font-bold hover:bg-netflix-gray/50 transition">
                 Tutup
               </button>
             </div>

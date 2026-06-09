@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { Event } from '@/types'
 
@@ -33,15 +33,15 @@ export function EventSection({ events }: Props) {
 
   return (
     <section className="netflix-section" id="timeline-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="font-serif text-3xl sm:text-4xl md:text-5xl text-center text-white mb-3"
       >
         Timeline &amp; Location
-      </motion.h2>
-      <motion.p
+      </m.h2>
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -49,11 +49,11 @@ export function EventSection({ events }: Props) {
         className="text-center text-netflix-light/40 text-sm mb-10"
       >
         Rangkaian acara pernikahan
-      </motion.p>
+      </m.p>
 
       <div className="max-w-lg mx-auto space-y-6 sm:space-y-8">
         {events.map((event, i) => (
-          <motion.div
+          <m.div
             key={event.id}
             initial={{ opacity: 0, y: 40 }}
             whileInView={{ opacity: 1, y: 0 }}
@@ -64,7 +64,7 @@ export function EventSection({ events }: Props) {
             {/* Event Card */}
             <div className="flex gap-3 sm:gap-4">
               {/* Event Image */}
-              <motion.div
+              <m.div
                 whileHover={{ scale: 1.05 }}
                 className="flex-shrink-0 w-24 h-24 sm:w-28 sm:h-28 md:w-32 md:h-32 rounded-lg overflow-hidden relative shadow-lg bg-netflix-gray/30"
               >
@@ -72,7 +72,7 @@ export function EventSection({ events }: Props) {
                   <Image
                     src={event.image_url}
                     alt={event.title}
-                    fill
+                    fill sizes="(max-width: 768px) 100vw, 50vw"
                     className="object-cover"
                   />
                 ) : (
@@ -82,19 +82,19 @@ export function EventSection({ events }: Props) {
                     </svg>
                   </div>
                 )}
-              </motion.div>
+              </m.div>
 
               {/* Event Details */}
               <div className="flex-1 min-w-0">
                 {/* Badge */}
-                <motion.span
+                <m.span
                   initial={{ scale: 0.8 }}
                   whileInView={{ scale: 1 }}
                   viewport={{ once: true }}
                   className="inline-block bg-netflix-red text-white text-[10px] sm:text-xs font-bold px-2.5 sm:px-3 py-0.5 sm:py-1 rounded mb-2"
                 >
                   {event.title}
-                </motion.span>
+                </m.span>
 
                 {/* Date */}
                 <h3 className="text-white font-bold text-base sm:text-lg mb-2">
@@ -114,7 +114,7 @@ export function EventSection({ events }: Props) {
             </div>
 
             {/* Address */}
-            <motion.div
+            <m.div
               initial={{ opacity: 0 }}
               whileInView={{ opacity: 1 }}
               viewport={{ once: true }}
@@ -125,11 +125,11 @@ export function EventSection({ events }: Props) {
                 Bertempat di {event.location}
                 {event.address && ` - ${event.address}`}
               </p>
-            </motion.div>
+            </m.div>
 
             {/* Google Maps Link */}
             {event.map_url && (
-              <motion.a
+              <m.a
                 href={event.map_url}
                 target="_blank"
                 rel="noopener noreferrer"
@@ -140,9 +140,9 @@ export function EventSection({ events }: Props) {
                 <svg className="w-3 h-3 sm:w-4 sm:h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                 </svg>
-              </motion.a>
+              </m.a>
             )}
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </section>

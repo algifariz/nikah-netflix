@@ -1,4 +1,42 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
+import { getBaseUrl, toAbsoluteUrl } from '@/lib/utils'
+
+export async function generateMetadata(): Promise<Metadata> {
+  const metadataBase = new URL(getBaseUrl())
+
+  return {
+    metadataBase,
+    title: '404 - Halaman Tidak Ditemukan',
+    description: 'Maaf, halaman yang Anda cari tidak tersedia.',
+    openGraph: {
+      title: '404 - Halaman Tidak Ditemukan',
+      description: 'Maaf, halaman yang Anda cari tidak tersedia.',
+      url: toAbsoluteUrl('/'),
+      siteName: 'Wedding Invitation',
+      locale: 'id_ID',
+      type: 'website',
+      images: [
+        {
+          url: toAbsoluteUrl('/og-image.jpg'),
+          secureUrl: toAbsoluteUrl('/og-image.jpg'),
+          width: 1200,
+          height: 630,
+          alt: 'Wedding Invitation',
+          type: 'image/jpeg',
+        },
+        {
+          url: toAbsoluteUrl('/og-image-square.jpg'),
+          secureUrl: toAbsoluteUrl('/og-image-square.jpg'),
+          width: 400,
+          height: 400,
+          alt: 'Wedding Invitation',
+          type: 'image/jpeg',
+        },
+      ],
+    },
+  }
+}
 
 export default function NotFound() {
   return (

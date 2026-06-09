@@ -28,9 +28,6 @@ export function detectInAppBrowser(): boolean {
   return false
 }
 
-export function cn(...classes: (string | undefined | null | false)[]) {
-  return classes.filter(Boolean).join(' ')
-}
 
 export function generateInvitationCode(): string {
   const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789'

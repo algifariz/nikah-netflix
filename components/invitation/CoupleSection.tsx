@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { Settings } from '@/types'
 
@@ -11,16 +11,16 @@ interface Props {
 export function CoupleSection({ settings }: Props) {
   return (
     <section className="netflix-section">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="text-center mb-2"
       >
         <span className="text-netflix-red text-xs font-bold tracking-[0.3em] uppercase">The Wedding Of</span>
-      </motion.div>
+      </m.div>
 
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -28,18 +28,18 @@ export function CoupleSection({ settings }: Props) {
         className="font-serif text-3xl sm:text-4xl md:text-5xl font-bold text-center mb-10 md:mb-14"
       >
         Bride &amp; Groom
-      </motion.h2>
+      </m.h2>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 md:gap-12 max-w-3xl mx-auto">
         {/* Groom */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: -40 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
           viewport={{ once: true }}
           className="text-center"
         >
-          <motion.div
+          <m.div
             whileHover={{ scale: 1.03 }}
             className="w-40 h-56 sm:w-48 sm:h-64 mx-auto mb-5 rounded-lg overflow-hidden bg-netflix-dark relative shadow-xl shadow-black/50"
           >
@@ -47,7 +47,7 @@ export function CoupleSection({ settings }: Props) {
               <Image
                 src={settings.groom_photo}
                 alt={settings.groom_name || 'Groom'}
-                fill
+                fill sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
             ) : (
@@ -59,8 +59,8 @@ export function CoupleSection({ settings }: Props) {
             )}
             {/* Overlay gradient */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          </motion.div>
-          <motion.div
+          </m.div>
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -74,18 +74,18 @@ export function CoupleSection({ settings }: Props) {
               Putra dari Bapak {settings?.groom_father || '...'} &amp; Ibu{' '}
               {settings?.groom_mother || '...'}
             </p>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
 
         {/* Bride */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, x: 40 }}
           whileInView={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.7, ease: 'easeOut' }}
           viewport={{ once: true }}
           className="text-center"
         >
-          <motion.div
+          <m.div
             whileHover={{ scale: 1.03 }}
             className="w-40 h-56 sm:w-48 sm:h-64 mx-auto mb-5 rounded-lg overflow-hidden bg-netflix-dark relative shadow-xl shadow-black/50"
           >
@@ -93,7 +93,7 @@ export function CoupleSection({ settings }: Props) {
               <Image
                 src={settings.bride_photo}
                 alt={settings.bride_name || 'Bride'}
-                fill
+                fill sizes="(max-width: 768px) 100vw, 50vw"
                 className="object-cover"
               />
             ) : (
@@ -104,8 +104,8 @@ export function CoupleSection({ settings }: Props) {
               </div>
             )}
             <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
-          </motion.div>
-          <motion.div
+          </m.div>
+          <m.div
             initial={{ opacity: 0, y: 10 }}
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
@@ -119,8 +119,8 @@ export function CoupleSection({ settings }: Props) {
               Putri dari Bapak {settings?.bride_father || '...'} &amp; Ibu{' '}
               {settings?.bride_mother || '...'}
             </p>
-          </motion.div>
-        </motion.div>
+          </m.div>
+        </m.div>
       </div>
     </section>
   )

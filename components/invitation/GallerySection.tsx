@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { GalleryImage } from '@/types'
 
@@ -13,15 +13,15 @@ export function GallerySection({ images }: Props) {
 
   return (
     <section className="netflix-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2"
       >
         Our Gallery
-      </motion.h2>
-      <motion.p
+      </m.h2>
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -29,12 +29,12 @@ export function GallerySection({ images }: Props) {
         className="text-netflix-light/40 text-sm mb-6"
       >
         Momen-momen indah kami
-      </motion.p>
+      </m.p>
 
       {/* Netflix-style horizontal scroll row */}
       <div className="netflix-row">
         {images.map((image, i) => (
-          <motion.div
+          <m.div
             key={image.id}
             initial={{ opacity: 0, scale: 0.85 }}
             whileInView={{ opacity: 1, scale: 1 }}
@@ -45,7 +45,7 @@ export function GallerySection({ images }: Props) {
             <Image
               src={image.image_url}
               alt={image.caption || `Gallery ${i + 1}`}
-              fill
+              fill sizes="(max-width: 768px) 100vw, 50vw"
               className="object-cover transition-transform duration-700 group-hover:scale-110"
             />
             
@@ -68,7 +68,7 @@ export function GallerySection({ images }: Props) {
                 {i + 1}
               </span>
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </section>

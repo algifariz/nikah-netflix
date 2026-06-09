@@ -1,35 +1,14 @@
-import type { NextAuthOptions } from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
+import { createSupabaseServerClient } from '@/lib/supabase/server'
 
-export const authOptions: NextAuthOptions = {
-  providers: [
-    CredentialsProvider({
-      name: 'Credentials',
-      credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
-      },
-      async authorize(credentials) {
-        if (!credentials) return null
-        if (
-          credentials.email === process.env.ADMIN_EMAIL &&
-          credentials.password === process.env.ADMIN_PASSWORD
-        ) {
-          return {
-            id: '1',
-            email: credentials.email,
-            name: 'Admin',
-          }
-        }
-        return null
-      },
-    }),
-  ],
-  pages: {
-    signIn: '/admin/login',
-  },
-  session: {
-    strategy: 'jwt',
-  },
-  secret: process.env.NEXTAUTH_SECRET,
+/**
+ * Check if the current request is authenticated via Supabase Auth.
+ * Returns the user if authenticated, null otherwise.
+ * Use this in API routes as a replacement for getServerSession.
+ */
+export async function getAuthUser() {
+  const supabase = await createSupabaseServerClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  return user
 }

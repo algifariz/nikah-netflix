@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
-import { SessionProvider } from '@/components/providers/SessionProvider'
-import { getBaseUrl } from '@/lib/utils'
+import { getBaseUrl, toAbsoluteUrl } from '@/lib/utils'
 
 export async function generateMetadata(): Promise<Metadata> {
   const metadataBase = new URL(getBaseUrl())
@@ -21,16 +20,20 @@ export async function generateMetadata(): Promise<Metadata> {
       type: 'website',
       images: [
         {
-          url: '/og-image.jpg',
+          url: toAbsoluteUrl('/og-image.jpg'),
+          secureUrl: toAbsoluteUrl('/og-image.jpg'),
           width: 1200,
           height: 630,
           alt: 'Wedding Invitation',
+          type: 'image/jpeg',
         },
         {
-          url: '/og-image-square.jpg',
+          url: toAbsoluteUrl('/og-image-square.jpg'),
+          secureUrl: toAbsoluteUrl('/og-image-square.jpg'),
           width: 400,
           height: 400,
           alt: 'Wedding Invitation',
+          type: 'image/jpeg',
         },
       ],
     },
@@ -45,7 +48,7 @@ export default function RootLayout({
   return (
     <html lang="id" suppressHydrationWarning>
       <body className="antialiased" suppressHydrationWarning>
-        <SessionProvider>{children}</SessionProvider>
+        {children}
       </body>
     </html>
   )

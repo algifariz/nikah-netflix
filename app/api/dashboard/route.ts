@@ -1,16 +1,15 @@
 import { NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
+import { getAuthUser } from '@/lib/auth'
 import { supabaseAdmin } from '@/lib/supabase/server'
 
 export async function GET() {
-  const session = await getServerSession(authOptions)
-  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  const user = await getAuthUser()
+  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 
-  const { data: guests } = await supabaseAdmin.from('guests').select('*')
-  const { count: wishesCount } = await supabaseAdmin
-    .from('wishes')
-    .select('*', { count: 'exact', head: true })
+  const [{ data: guests }, { count: wishesCount }] = await Promise.all([
+    supabaseAdmin.from('guests').select('*'),
+    supabaseAdmin.from('wishes').select('*', { count: 'exact', head: true }),
+  ])
 
   const guestList = guests || []
 

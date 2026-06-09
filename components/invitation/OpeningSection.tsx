@@ -1,6 +1,7 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { useMemo } from 'react'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { Settings } from '@/types'
 
@@ -11,11 +12,19 @@ interface Props {
 }
 
 export function OpeningSection({ guestName, settings, onOpen }: Props) {
+  const particles = useMemo(
+    () => Array.from({ length: 6 }, () => ({
+      x: `${Math.random() * 100}%`,
+      duration: 4 + Math.random() * 3,
+    })),
+    []
+  )
+
   return (
     <div className="fixed inset-0 z-50 bg-netflix-black flex items-center justify-center overflow-hidden">
       {/* Background image with parallax effect */}
       {settings?.hero_image && (
-        <motion.div
+        <m.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 10, ease: 'linear' }}
@@ -24,24 +33,24 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
           <Image
             src={settings.hero_image}
             alt="Background"
-            fill
+            fill sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover opacity-20"
             priority
           />
-        </motion.div>
+        </m.div>
       )}
 
       {/* Animated gradient overlay */}
       <div className="absolute inset-0 bg-gradient-to-t from-netflix-black via-netflix-black/80 to-netflix-black/40" />
       
       {/* Floating particles effect */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        {[...Array(6)].map((_, i) => (
-          <motion.div
+      <div className="absolute inset-0 overflow-hidden pointer-events-none" suppressHydrationWarning>
+        {particles.map((p, i) => (
+          <m.div
             key={i}
             className="absolute w-1 h-1 bg-netflix-red/30 rounded-full"
             initial={{ 
-              x: `${Math.random() * 100}%`, 
+              x: p.x, 
               y: '100%',
               opacity: 0 
             }}
@@ -50,7 +59,7 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
               opacity: [0, 1, 0]
             }}
             transition={{ 
-              duration: 4 + Math.random() * 3,
+              duration: p.duration,
               repeat: Infinity,
               delay: i * 0.8,
               ease: 'linear'
@@ -60,34 +69,34 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
       </div>
 
       {/* Content */}
-      <motion.div
+      <m.div
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ duration: 0.5 }}
         className="relative z-10 text-center px-6 w-full max-w-md"
       >
         {/* Netflix N logo */}
-        <motion.div
-          initial={{ scale: 0, rotateY: 180 }}
+        <m.div
+          initial={{ scale: 0.95, rotateY: 180 }}
           animate={{ scale: 1, rotateY: 0 }}
           transition={{ delay: 0.2, type: 'spring', stiffness: 200 }}
           className="mb-6"
         >
           <span className="text-netflix-red text-7xl md:text-8xl font-black inline-block">N</span>
-        </motion.div>
+        </m.div>
 
         {/* Badge */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           className="mb-6"
         >
           <span className="netflix-badge text-xs sm:text-sm tracking-[0.2em]">WEDDING INVITATION</span>
-        </motion.div>
+        </m.div>
 
         {/* Couple names */}
-        <motion.h1
+        <m.h1
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.7 }}
@@ -96,20 +105,20 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
           {settings?.groom_name || 'Ahmad'}
           <span className="text-netflix-red"> &amp; </span>
           {settings?.bride_name || 'Aisyah'}
-        </motion.h1>
+        </m.h1>
 
         {/* Hashtag */}
-        <motion.p
+        <m.p
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.9 }}
           className="text-netflix-light/50 text-sm mb-8"
         >
           {settings?.hashtag || '#AhmadAisyah2024'}
-        </motion.p>
+        </m.p>
 
         {/* Guest name card */}
-        <motion.div
+        <m.div
           initial={{ opacity: 0, scale: 0.9 }}
           animate={{ opacity: 1, scale: 1 }}
           transition={{ delay: 1.1 }}
@@ -117,10 +126,10 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
         >
           <p className="text-netflix-light/50 text-xs mb-1">Kepada Yth.</p>
           <p className="text-lg sm:text-xl font-bold">{guestName}</p>
-        </motion.div>
+        </m.div>
 
         {/* Open button */}
-        <motion.button
+        <m.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 1.3 }}
@@ -133,8 +142,8 @@ export function OpeningSection({ guestName, settings, onOpen }: Props) {
             <path d="M8 5v14l11-7z" />
           </svg>
           Buka Undangan
-        </motion.button>
-      </motion.div>
+        </m.button>
+      </m.div>
     </div>
   )
 }

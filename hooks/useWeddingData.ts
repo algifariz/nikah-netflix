@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { createClient } from '@/lib/supabase/client'
 import type { Settings, Event, LoveStory, GalleryImage, Wish, GiftAccount } from '@/types'
 
 export function useWeddingData() {
@@ -14,6 +14,8 @@ export function useWeddingData() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    const supabase = createClient()
+
     async function fetchData() {
       try {
         const [settingsRes, eventsRes, storiesRes, galleryRes, wishesRes, giftRes] =

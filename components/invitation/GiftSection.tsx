@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { GiftAccount } from '@/types'
 
 interface Props {
@@ -38,16 +38,16 @@ export function GiftSection({ giftAccounts }: Props) {
 
   return (
     <section className="netflix-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="font-serif text-3xl sm:text-4xl font-bold text-center mb-3"
       >
         Amplop Digital
-      </motion.h2>
+      </m.h2>
 
-      <motion.p
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -56,13 +56,13 @@ export function GiftSection({ giftAccounts }: Props) {
       >
         Doa restu Anda merupakan karunia yang sangat berarti bagi kami. Namun jika Anda ingin
         memberikan tanda kasih, kami menyediakan amplop digital.
-      </motion.p>
+      </m.p>
 
       <div className="max-w-md mx-auto space-y-5">
         {giftAccounts.map((account, i) => {
           const style = getCardStyle(account.provider_name, account.type)
           return (
-            <motion.div
+            <m.div
               key={account.id}
               initial={{ opacity: 0, y: 30, rotateX: 10 }}
               whileInView={{ opacity: 1, y: 0, rotateX: 0 }}
@@ -115,7 +115,7 @@ export function GiftSection({ giftAccounts }: Props) {
                 </div>
 
                 {/* Copy button */}
-                <motion.button
+                <m.button
                   whileTap={{ scale: 0.9 }}
                   onClick={() => copyToClipboard(account.account_number, account.id)}
                   className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
@@ -125,9 +125,9 @@ export function GiftSection({ giftAccounts }: Props) {
                   }`}
                 >
                   {copied === account.id ? 'Tersalin!' : 'Salin'}
-                </motion.button>
+                </m.button>
               </div>
-            </motion.div>
+            </m.div>
           )
         })}
       </div>

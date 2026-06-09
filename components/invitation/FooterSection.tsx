@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import type { Settings } from '@/types'
 
 interface Props {
@@ -10,7 +10,7 @@ interface Props {
 export function FooterSection({ settings }: Props) {
   return (
     <footer className="py-12 sm:py-16 px-4 sm:px-6 text-center border-t border-netflix-gray/20">
-      <motion.div
+      <m.div
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
@@ -22,7 +22,7 @@ export function FooterSection({ settings }: Props) {
           apabila Bapak/Ibu/Saudara/i berkenan hadir
         </p>
 
-        <motion.h3
+        <m.h3
           initial={{ opacity: 0, scale: 0.9 }}
           whileInView={{ opacity: 1, scale: 1 }}
           viewport={{ once: true }}
@@ -32,7 +32,7 @@ export function FooterSection({ settings }: Props) {
           {settings?.groom_name || 'Ahmad'}
           <span className="text-netflix-red"> &amp; </span>
           {settings?.bride_name || 'Aisyah'}
-        </motion.h3>
+        </m.h3>
 
         <p className="text-netflix-light/30 text-xs mt-4">
           {settings?.hashtag || '#AhmadAisyah2024'}
@@ -44,7 +44,7 @@ export function FooterSection({ settings }: Props) {
             Netflix Wedding Invitation
           </p>
         </div>
-      </motion.div>
+      </m.div>
     </footer>
   )
 }

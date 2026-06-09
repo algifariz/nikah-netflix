@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import { useWeddingData } from '@/hooks/useWeddingData'
 import { detectInAppBrowser } from '@/lib/utils'
 import { OpeningSection } from './OpeningSection'
@@ -16,6 +16,7 @@ import { WishesSection } from './WishesSection'
 import { GiftSection } from './GiftSection'
 import { QRSection } from './QRSection'
 import { FooterSection } from './FooterSection'
+import { MotionProvider } from '@/components/providers/MotionProvider'
 import { MusicPlayer } from './MusicPlayer'
 
 interface Props {
@@ -85,7 +86,7 @@ export function WeddingApp({ guestName, code, category }: Props) {
   if (showIntro) {
     return (
       <div className="fixed inset-0 z-50 bg-black flex flex-col items-center justify-center">
-        <motion.div
+        <m.div
           initial={{ scale: 0.3, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           transition={{ duration: 1.5, ease: [0.25, 0.1, 0.25, 1] }}
@@ -94,15 +95,15 @@ export function WeddingApp({ guestName, code, category }: Props) {
           <span className="text-netflix-red text-8xl sm:text-9xl font-black inline-block">
             N
           </span>
-        </motion.div>
-        <motion.div
+        </m.div>
+        <m.div
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 1 }}
           className="mt-6"
         >
           <div className="w-8 h-8 border-4 border-netflix-red border-t-transparent rounded-full animate-spin" />
-        </motion.div>
+        </m.div>
       </div>
     )
   }
@@ -110,7 +111,7 @@ export function WeddingApp({ guestName, code, category }: Props) {
   return (
     <main className="min-h-[100svh] bg-netflix-black overflow-x-hidden" suppressHydrationWarning>
       {/* Netflix-style top navigation */}
-      <motion.nav
+      <m.nav
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.5 }}
@@ -122,7 +123,7 @@ export function WeddingApp({ guestName, code, category }: Props) {
             {settings?.groom_name} &amp; {settings?.bride_name}
           </span>
         </div>
-      </motion.nav>
+      </m.nav>
 
       <MusicPlayer musicUrl={settings?.music_url} isPlaying={isPlaying} setIsPlaying={setIsPlaying} />
 

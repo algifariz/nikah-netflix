@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { signOut } from 'next-auth/react'
+import { createClient } from '@/lib/supabase/client'
 import { DashboardStats } from './DashboardStats'
 import { GuestManager } from './GuestManager'
 import { SettingsPanel } from './SettingsPanel'
@@ -9,16 +9,16 @@ import { QRScannerModal } from './QRScannerModal'
 
 type Tab = 'dashboard' | 'guests' | 'settings' | 'scanner'
 
+const tabs: { id: Tab; label: string; icon: string }[] = [
+  { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'guests', label: 'Tamu', icon: '👥' },
+  { id: 'settings', label: 'Settings', icon: '⚙️' },
+  { id: 'scanner', label: 'QR Scan', icon: '📷' },
+]
+
 export function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard')
   const [showScanner, setShowScanner] = useState(false)
-
-  const tabs: { id: Tab; label: string; icon: string }[] = [
-    { id: 'dashboard', label: 'Dashboard', icon: '📊' },
-    { id: 'guests', label: 'Tamu', icon: '👥' },
-    { id: 'settings', label: 'Settings', icon: '⚙️' },
-    { id: 'scanner', label: 'QR Scan', icon: '📷' },
-  ]
 
   return (
     <div className="min-h-screen bg-netflix-black">
@@ -28,8 +28,12 @@ export function AdminDashboard() {
           <h1 className="text-xl font-black text-netflix-red">N</h1>
           <span className="text-sm text-netflix-light/50">Admin Panel</span>
         </div>
-        <button
-          onClick={() => signOut({ callbackUrl: '/admin/login' })}
+        <button type="button"
+          onClick={async () => {
+          const supabase = createClient()
+          await supabase.auth.signOut()
+          window.location.href = '/admin/login'
+        }}
           className="text-sm text-netflix-light/50 hover:text-white transition-colors"
         >
           Logout
@@ -40,7 +44,7 @@ export function AdminDashboard() {
       <nav className="bg-netflix-dark/50 border-b border-netflix-gray/20 px-4 md:px-8">
         <div className="flex gap-1 overflow-x-auto">
           {tabs.map((tab) => (
-            <button
+            <button type="button"
               key={tab.id}
               onClick={() => {
                 if (tab.id === 'scanner') {

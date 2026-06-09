@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { LoveStory } from '@/types'
 
@@ -13,15 +13,15 @@ export function LoveStorySection({ stories }: Props) {
 
   return (
     <section className="netflix-section">
-      <motion.h2
+      <m.h2
         initial={{ opacity: 0, y: 20 }}
         whileInView={{ opacity: 1, y: 0 }}
         viewport={{ once: true }}
         className="text-2xl sm:text-3xl md:text-4xl font-bold mb-2"
       >
         Our Love Story
-      </motion.h2>
-      <motion.p
+      </m.h2>
+      <m.p
         initial={{ opacity: 0 }}
         whileInView={{ opacity: 1 }}
         viewport={{ once: true }}
@@ -29,12 +29,12 @@ export function LoveStorySection({ stories }: Props) {
         className="text-netflix-light/40 text-sm mb-6"
       >
         Perjalanan cinta kami
-      </motion.p>
+      </m.p>
 
       {/* Netflix-style horizontal scroll */}
       <div className="netflix-row">
         {stories.map((story, i) => (
-          <motion.div
+          <m.div
             key={story.id}
             initial={{ opacity: 0, x: 40 }}
             whileInView={{ opacity: 1, x: 0 }}
@@ -48,7 +48,7 @@ export function LoveStorySection({ stories }: Props) {
                 <Image
                   src={story.image_url}
                   alt={story.title}
-                  fill
+                  fill sizes="(max-width: 768px) 100vw, 50vw"
                   className="object-cover transition-transform duration-700 group-hover:scale-110"
                 />
               ) : (
@@ -58,7 +58,7 @@ export function LoveStorySection({ stories }: Props) {
               )}
               
               {/* Play icon overlay */}
-              <motion.div
+              <m.div
                 initial={{ opacity: 0 }}
                 whileHover={{ opacity: 1 }}
                 className="absolute inset-0 flex items-center justify-center bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity duration-300"
@@ -68,7 +68,7 @@ export function LoveStorySection({ stories }: Props) {
                     <path d="M8 5v14l11-7z" />
                   </svg>
                 </div>
-              </motion.div>
+              </m.div>
 
               {/* Episode badge */}
               <div className="absolute top-2 left-2">
@@ -89,7 +89,7 @@ export function LoveStorySection({ stories }: Props) {
                 {story.description}
               </p>
             </div>
-          </motion.div>
+          </m.div>
         ))}
       </div>
     </section>

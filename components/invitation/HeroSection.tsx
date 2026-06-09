@@ -1,6 +1,6 @@
 'use client'
 
-import { motion } from 'framer-motion'
+import { m } from 'framer-motion'
 import Image from 'next/image'
 import type { Settings } from '@/types'
 import { formatDate } from '@/lib/utils'
@@ -14,7 +14,7 @@ export function HeroSection({ settings }: Props) {
     <section className="relative h-[100svh] w-full overflow-hidden">
       {/* Fullscreen background image with zoom animation */}
       {settings?.hero_image ? (
-        <motion.div
+        <m.div
           initial={{ scale: 1.1 }}
           animate={{ scale: 1 }}
           transition={{ duration: 8, ease: 'easeOut' }}
@@ -23,11 +23,11 @@ export function HeroSection({ settings }: Props) {
           <Image
             src={settings.hero_image}
             alt="Wedding Hero"
-            fill
+            fill sizes="(max-width: 768px) 100vw, 50vw"
             className="object-cover"
             priority
           />
-        </motion.div>
+        </m.div>
       ) : (
         <div className="absolute inset-0 bg-gradient-to-br from-[#1a1a2e] to-[#16213e]" />
       )}
@@ -41,7 +41,7 @@ export function HeroSection({ settings }: Props) {
       <div className="relative z-10 h-full flex flex-col justify-end pb-16 sm:pb-20 px-4 sm:px-6 md:px-16">
         <div className="max-w-2xl">
           {/* Netflix series badge */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3, duration: 0.6 }}
@@ -49,10 +49,10 @@ export function HeroSection({ settings }: Props) {
           >
             <span className="text-netflix-red font-black text-lg">N</span>
             <span className="text-white/70 text-xs sm:text-sm font-medium tracking-wider uppercase">S E R I E S</span>
-          </motion.div>
+          </m.div>
 
           {/* Title */}
-          <motion.h1
+          <m.h1
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.5, duration: 0.8 }}
@@ -61,10 +61,10 @@ export function HeroSection({ settings }: Props) {
             {settings?.groom_name || 'Ahmad'}
             <span className="text-netflix-red"> &amp; </span>
             {settings?.bride_name || 'Aisyah'}
-          </motion.h1>
+          </m.h1>
 
           {/* Match percentage & info - Netflix style */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.7, duration: 0.6 }}
@@ -77,10 +77,10 @@ export function HeroSection({ settings }: Props) {
             <span className="border border-white/30 text-white/50 text-[10px] sm:text-xs px-1.5 py-0.5 rounded">
               HD
             </span>
-          </motion.div>
+          </m.div>
 
           {/* Description */}
-          <motion.p
+          <m.p
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.9, duration: 0.6 }}
@@ -88,16 +88,16 @@ export function HeroSection({ settings }: Props) {
           >
             {settings?.opening_text ||
               'Dengan memohon rahmat dan ridho Allah SWT, kami bermaksud menyelenggarakan pernikahan kami'}
-          </motion.p>
+          </m.p>
 
           {/* Netflix action buttons */}
-          <motion.div
+          <m.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 1.1, duration: 0.6 }}
             className="flex flex-wrap items-center gap-3"
           >
-            <button
+            <button type="button"
               onClick={() => {
                 // Auto scroll through entire page slowly, stops if user scrolls manually
                 const totalHeight = document.documentElement.scrollHeight - window.innerHeight
@@ -112,8 +112,8 @@ export function HeroSection({ settings }: Props) {
                   window.removeEventListener('touchmove', stopAutoScroll)
                 }
 
-                window.addEventListener('wheel', stopAutoScroll, { once: true })
-                window.addEventListener('touchmove', stopAutoScroll, { once: true })
+                window.addEventListener('wheel', stopAutoScroll, { once: true, passive: true })
+                window.addEventListener('touchmove', stopAutoScroll, { once: true, passive: true })
 
                 function scrollStep(currentTime: number) {
                   if (stopped) return
@@ -136,7 +136,7 @@ export function HeroSection({ settings }: Props) {
               </svg>
               Play
             </button>
-            <button
+            <button type="button"
               onClick={() => {
                 // Scroll to Timeline & Location section
                 const el = document.getElementById('timeline-section')
@@ -149,17 +149,17 @@ export function HeroSection({ settings }: Props) {
               </svg>
               More Info
             </button>
-          </motion.div>
+          </m.div>
 
           {/* Hashtag */}
-          <motion.p
+          <m.p
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 1.3 }}
             className="text-white/30 text-xs sm:text-sm mt-4"
           >
             {settings?.hashtag || '#AhmadAisyah2024'}
-          </motion.p>
+          </m.p>
         </div>
       </div>
     </section>

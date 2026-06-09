@@ -1,26 +1,116 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useReducer } from 'react'
+import Image from 'next/image'
 import type { Settings, Event, GiftAccount, GalleryImage, LoveStory } from '@/types'
 
 type Tab = 'mempelai' | 'acara' | 'lovestory' | 'gallery' | 'amplop' | 'media' | 'og'
 
 const inputClass = 'w-full bg-netflix-black border border-netflix-gray/30 rounded-lg p-3 text-sm text-white focus:border-netflix-red focus:outline-none transition'
 
+function getProviderLogo(name: string, type: string) {
+    const n = name.toLowerCase()
+    // Return color and abbreviation for inline logo
+    if (n.includes('bca')) return { color: 'bg-blue-800', text: 'BCA' }
+    if (n.includes('bni')) return { color: 'bg-orange-600', text: 'BNI' }
+    if (n.includes('bri')) return { color: 'bg-blue-700', text: 'BRI' }
+    if (n.includes('mandiri')) return { color: 'bg-blue-900', text: 'MDR' }
+    if (n.includes('bsi')) return { color: 'bg-teal-700', text: 'BSI' }
+    if (n.includes('cimb')) return { color: 'bg-red-800', text: 'CIMB' }
+    if (n.includes('dana')) return { color: 'bg-blue-500', text: 'DANA' }
+    if (n.includes('gopay') || n.includes('go-pay')) return { color: 'bg-green-600', text: 'GP' }
+    if (n.includes('ovo')) return { color: 'bg-purple-700', text: 'OVO' }
+    if (n.includes('shopeepay') || n.includes('shopee')) return { color: 'bg-orange-500', text: 'SPay' }
+    if (n.includes('linkaja') || n.includes('link aja')) return { color: 'bg-red-600', text: 'LA' }
+    if (type === 'ewallet') return { color: 'bg-green-700', text: name.slice(0, 2).toUpperCase() }
+    return { color: 'bg-gray-600', text: name.slice(0, 3).toUpperCase() }
+  }
+
+
+interface SettingsState {
+  activeTab: Tab
+  settings: Settings | null
+  events: Event[]
+  giftAccounts: GiftAccount[]
+  gallery: GalleryImage[]
+  loveStories: LoveStory[]
+  loading: boolean
+  saving: boolean
+  message: string
+}
+
+type SettingsAction =
+  | { type: 'SET_ACTIVE_TAB'; tab: Tab }
+  | { type: 'SET_DATA'; settings: Settings; events: Event[]; giftAccounts: GiftAccount[]; gallery: GalleryImage[]; loveStories: LoveStory[] }
+  | { type: 'SET_SETTINGS'; settings: Settings }
+  | { type: 'SET_EVENTS'; events: Event[] }
+  | { type: 'SET_GIFT_ACCOUNTS'; giftAccounts: GiftAccount[] }
+  | { type: 'SET_GALLERY'; gallery: GalleryImage[] }
+  | { type: 'SET_LOVE_STORIES'; loveStories: LoveStory[] }
+  | { type: 'SET_LOADING'; loading: boolean }
+  | { type: 'SET_SAVING'; saving: boolean }
+  | { type: 'SET_MESSAGE'; message: string }
+  | { type: 'ADD_EVENT'; event: Event }
+  | { type: 'UPDATE_EVENT'; event: Event }
+  | { type: 'DELETE_EVENT'; id: string }
+  | { type: 'ADD_GIFT'; account: GiftAccount }
+  | { type: 'UPDATE_GIFT'; account: GiftAccount }
+  | { type: 'DELETE_GIFT'; id: string }
+  | { type: 'ADD_GALLERY'; image: GalleryImage }
+  | { type: 'DELETE_GALLERY'; id: string }
+  | { type: 'ADD_LOVE_STORY'; story: LoveStory }
+  | { type: 'UPDATE_LOVE_STORY'; story: LoveStory }
+  | { type: 'DELETE_LOVE_STORY'; id: string }
+
+const initialSettingsState: SettingsState = {
+  activeTab: 'mempelai',
+  settings: null,
+  events: [],
+  giftAccounts: [],
+  gallery: [],
+  loveStories: [],
+  loading: true,
+  saving: false,
+  message: '',
+}
+
+function settingsReducer(state: SettingsState, action: SettingsAction): SettingsState {
+  switch (action.type) {
+    case 'SET_ACTIVE_TAB': return { ...state, activeTab: action.tab }
+    case 'SET_DATA': return { ...state, settings: action.settings, events: action.events, giftAccounts: action.giftAccounts, gallery: action.gallery, loveStories: action.loveStories }
+    case 'SET_SETTINGS': return { ...state, settings: action.settings }
+    case 'SET_EVENTS': return { ...state, events: action.events }
+    case 'SET_GIFT_ACCOUNTS': return { ...state, giftAccounts: action.giftAccounts }
+    case 'SET_GALLERY': return { ...state, gallery: action.gallery }
+    case 'SET_LOVE_STORIES': return { ...state, loveStories: action.loveStories }
+    case 'SET_LOADING': return { ...state, loading: action.loading }
+    case 'SET_SAVING': return { ...state, saving: action.saving }
+    case 'SET_MESSAGE': return { ...state, message: action.message }
+    case 'ADD_EVENT': return { ...state, events: [...state.events, action.event] }
+    case 'UPDATE_EVENT': return { ...state, events: state.events.map(e => e.id === action.event.id ? action.event : e) }
+    case 'DELETE_EVENT': return { ...state, events: state.events.filter(e => e.id !== action.id) }
+    case 'ADD_GIFT': return { ...state, giftAccounts: [...state.giftAccounts, action.account] }
+    case 'UPDATE_GIFT': return { ...state, giftAccounts: state.giftAccounts.map(g => g.id === action.account.id ? action.account : g) }
+    case 'DELETE_GIFT': return { ...state, giftAccounts: state.giftAccounts.filter(g => g.id !== action.id) }
+    case 'ADD_GALLERY': return { ...state, gallery: [...state.gallery, action.image] }
+    case 'DELETE_GALLERY': return { ...state, gallery: state.gallery.filter(g => g.id !== action.id) }
+    case 'ADD_LOVE_STORY': return { ...state, loveStories: [...state.loveStories, action.story] }
+    case 'UPDATE_LOVE_STORY': return { ...state, loveStories: state.loveStories.map(s => s.id === action.story.id ? action.story : s) }
+    case 'DELETE_LOVE_STORY': return { ...state, loveStories: state.loveStories.filter(s => s.id !== action.id) }
+    default: return state
+  }
+}
+
 export function SettingsPanel() {
-  const [activeTab, setActiveTab] = useState<Tab>('mempelai')
-  const [settings, setSettings] = useState<Settings | null>(null)
-  const [events, setEvents] = useState<Event[]>([])
-  const [giftAccounts, setGiftAccounts] = useState<GiftAccount[]>([])
-  const [gallery, setGallery] = useState<GalleryImage[]>([])
-  const [loveStories, setLoveStories] = useState<LoveStory[]>([])
-  const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
-  const [message, setMessage] = useState('')
+  const [state, dispatch] = useReducer(settingsReducer, initialSettingsState)
+  const { activeTab, settings, events, giftAccounts, gallery, loveStories, loading, saving, message } = state
 
   const galleryInputRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
+    let cancelled = false
+    let messageTimer: ReturnType<typeof setTimeout> | undefined
+
     async function fetchData() {
       try {
         const [settingsRes, eventsRes, giftRes, galleryRes, loveRes] = await Promise.all([
@@ -30,25 +120,32 @@ export function SettingsPanel() {
           fetch('/api/gallery'),
           fetch('/api/love-stories'),
         ])
-        const settingsData = await settingsRes.json()
-        const eventsData = await eventsRes.json()
-        const giftData = await giftRes.json()
-        const galleryData = await galleryRes.json()
-        const loveData = await loveRes.json()
+        if (cancelled) return
 
-        if (settingsRes.ok) setSettings(settingsData)
-        if (eventsRes.ok) setEvents(eventsData)
-        if (giftRes.ok) setGiftAccounts(giftData)
-        if (galleryRes.ok) setGallery(galleryData)
-        if (loveRes.ok) setLoveStories(loveData)
+        const [settingsData, eventsData, giftData, galleryData, loveData] = await Promise.all([
+          settingsRes.json(),
+          eventsRes.json(),
+          giftRes.json(),
+          galleryRes.json(),
+          loveRes.json(),
+        ])
+
+        if (cancelled) return
+        dispatch({ type: 'SET_DATA', settings: settingsData, events: eventsData, giftAccounts: giftData, gallery: galleryData, loveStories: loveData })
       } catch {
-        setMessage('Error memuat data')
-        setTimeout(() => setMessage(''), 5000)
+        if (cancelled) return
+        dispatch({ type: 'SET_MESSAGE', message: 'Error memuat data' })
+        messageTimer = setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       } finally {
-        setLoading(false)
+        if (!cancelled) dispatch({ type: 'SET_LOADING', loading: false })
       }
     }
     fetchData()
+
+    return () => {
+      cancelled = true
+      if (messageTimer) clearTimeout(messageTimer)
+    }
   }, [])
 
   async function uploadFile(file: File): Promise<string | null> {
@@ -59,12 +156,12 @@ export function SettingsPanel() {
       const res = await fetch('/api/upload', { method: 'POST', body: formData })
       const data = await res.json()
       if (res.ok && data.url) return data.url
-      setMessage(data.error || 'Upload gagal')
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_MESSAGE', message: data.error || 'Upload gagal' })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       return null
     } catch {
-      setMessage('Upload gagal')
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_MESSAGE', message: 'Upload gagal' })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       return null
     }
   }
@@ -77,17 +174,17 @@ export function SettingsPanel() {
       const target = e.target as HTMLInputElement
       const file = target.files?.[0]
       if (!file) return
-      setSaving(true)
+      dispatch({ type: 'SET_SAVING', saving: true })
       const url = await uploadFile(file)
       if (url) callback(url)
-      setSaving(false)
+      dispatch({ type: 'SET_SAVING', saving: false })
     }
     input.click()
   }
 
   async function saveSettings() {
     if (!settings) return
-    setSaving(true)
+    dispatch({ type: 'SET_SAVING', saving: true })
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
@@ -95,15 +192,15 @@ export function SettingsPanel() {
         body: JSON.stringify(settings),
       })
       if (res.ok) {
-        setMessage('Berhasil disimpan')
+        dispatch({ type: 'SET_MESSAGE', message: 'Berhasil disimpan' })
       } else {
-        setMessage('Error menyimpan data')
+        dispatch({ type: 'SET_MESSAGE', message: 'Error menyimpan data' })
       }
     } catch {
-      setMessage('Error menyimpan data')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menyimpan data' })
     } finally {
-      setSaving(false)
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_SAVING', saving: false })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
     }
   }
 
@@ -139,9 +236,9 @@ export function SettingsPanel() {
           ['media', 'Media'],
           ['og', 'OG Preview'],
         ] as [Tab, string][]).map(([key, label]) => (
-          <button
+          <button type="button"
             key={key}
-            onClick={() => setActiveTab(key)}
+            onClick={() => dispatch({ type: 'SET_ACTIVE_TAB', tab: key })}
             className={`px-4 py-2 rounded-lg text-sm font-medium transition ${
               activeTab === key
                 ? 'bg-netflix-red text-white'
@@ -153,13 +250,13 @@ export function SettingsPanel() {
         ))}
       </div>
 
-      {activeTab === 'mempelai' && settings && <MempelaiTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} onPhotoUpload={handlePhotoUpload} />}
-      {activeTab === 'acara' && <AcaraTab events={events} setEvents={setEvents} setMessage={setMessage} uploadFile={uploadFile} />}
-      {activeTab === 'lovestory' && <LoveStoryTab loveStories={loveStories} setLoveStories={setLoveStories} setMessage={setMessage} uploadFile={uploadFile} />}
-      {activeTab === 'gallery' && <GalleryTab gallery={gallery} setGallery={setGallery} setMessage={setMessage} uploadFile={uploadFile} galleryInputRef={galleryInputRef} />}
-      {activeTab === 'amplop' && <AmplopTab giftAccounts={giftAccounts} setGiftAccounts={setGiftAccounts} setMessage={setMessage} />}
-      {activeTab === 'media' && settings && <MediaTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} />}
-      {activeTab === 'og' && settings && <OgTab settings={settings} setSettings={setSettings} saving={saving} onSave={saveSettings} />}
+      {activeTab === 'mempelai' && settings && <MempelaiTab dispatch={dispatch} settings={settings} saving={saving} onSave={saveSettings} onPhotoUpload={handlePhotoUpload} />}
+      {activeTab === 'acara' && <AcaraTab dispatch={dispatch} events={events} uploadFile={uploadFile} />}
+      {activeTab === 'lovestory' && <LoveStoryTab dispatch={dispatch} loveStories={loveStories} uploadFile={uploadFile} />}
+      {activeTab === 'gallery' && <GalleryTab dispatch={dispatch} gallery={gallery} uploadFile={uploadFile} galleryInputRef={galleryInputRef} />}
+      {activeTab === 'amplop' && <AmplopTab dispatch={dispatch} giftAccounts={giftAccounts} />}
+      {activeTab === 'media' && settings && <MediaTab dispatch={dispatch} settings={settings} saving={saving} onSave={saveSettings} />}
+      {activeTab === 'og' && settings && <OgTab dispatch={dispatch} settings={settings} saving={saving} onSave={saveSettings} />}
     </div>
   )
 }
@@ -167,21 +264,19 @@ export function SettingsPanel() {
 
 // ==================== MEMPELAI TAB ====================
 
-function MempelaiTab({
+function MempelaiTab({ dispatch, 
   settings,
-  setSettings,
   saving,
   onSave,
   onPhotoUpload,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   settings: Settings
-  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
   saving: boolean
   onSave: () => void
   onPhotoUpload: (callback: (url: string) => void) => void
-}) {
+ }) {
   function update(field: keyof Settings, value: string) {
-    setSettings((prev) => (prev ? { ...prev, [field]: value } : prev))
+    dispatch({ type: 'SET_SETTINGS', settings: settings ? { ...settings, [field]: value } : settings })
   }
 
   return (
@@ -192,25 +287,25 @@ function MempelaiTab({
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-gray-300">Mempelai Pria</h4>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
-            <input className={inputClass} value={settings.groom_name} onChange={(e) => update('groom_name', e.target.value)} />
+            <label htmlFor="nama_panggilan_0" className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
+            <input id="nama_panggilan_0" className={inputClass} value={settings.groom_name} onChange={(e) => update('groom_name', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
-            <input className={inputClass} value={settings.groom_full_name} onChange={(e) => update('groom_full_name', e.target.value)} />
+            <label htmlFor="nama_lengkap_1" className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
+            <input id="nama_lengkap_1" className={inputClass} value={settings.groom_full_name} onChange={(e) => update('groom_full_name', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
-            <input className={inputClass} value={settings.groom_father} onChange={(e) => update('groom_father', e.target.value)} />
+            <label htmlFor="nama_ayah_2" className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
+            <input id="nama_ayah_2" className={inputClass} value={settings.groom_father} onChange={(e) => update('groom_father', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
-            <input className={inputClass} value={settings.groom_mother} onChange={(e) => update('groom_mother', e.target.value)} />
+            <label htmlFor="nama_ibu_3" className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
+            <input id="nama_ibu_3" className={inputClass} value={settings.groom_mother} onChange={(e) => update('groom_mother', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Foto Mempelai Pria</label>
+            <label htmlFor="foto_mempelai_pria" className="block text-xs text-gray-400 mb-1">Foto Mempelai Pria</label>
             {settings.groom_photo && (
-              <img src={settings.groom_photo} alt="Groom" className="w-24 h-24 rounded-lg object-cover mb-2" />
+              <Image src={settings.groom_photo} alt="Groom" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-24 h-24 rounded-lg object-cover mb-2"  />
             )}
             <button
               type="button"
@@ -225,25 +320,25 @@ function MempelaiTab({
         <div className="space-y-4">
           <h4 className="text-sm font-medium text-gray-300">Mempelai Wanita</h4>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
-            <input className={inputClass} value={settings.bride_name} onChange={(e) => update('bride_name', e.target.value)} />
+            <label htmlFor="nama_panggilan_4" className="block text-xs text-gray-400 mb-1">Nama Panggilan</label>
+            <input id="nama_panggilan_4" className={inputClass} value={settings.bride_name} onChange={(e) => update('bride_name', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
-            <input className={inputClass} value={settings.bride_full_name} onChange={(e) => update('bride_full_name', e.target.value)} />
+            <label htmlFor="nama_lengkap_5" className="block text-xs text-gray-400 mb-1">Nama Lengkap</label>
+            <input id="nama_lengkap_5" className={inputClass} value={settings.bride_full_name} onChange={(e) => update('bride_full_name', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
-            <input className={inputClass} value={settings.bride_father} onChange={(e) => update('bride_father', e.target.value)} />
+            <label htmlFor="nama_ayah_6" className="block text-xs text-gray-400 mb-1">Nama Ayah</label>
+            <input id="nama_ayah_6" className={inputClass} value={settings.bride_father} onChange={(e) => update('bride_father', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
-            <input className={inputClass} value={settings.bride_mother} onChange={(e) => update('bride_mother', e.target.value)} />
+            <label htmlFor="nama_ibu_7" className="block text-xs text-gray-400 mb-1">Nama Ibu</label>
+            <input id="nama_ibu_7" className={inputClass} value={settings.bride_mother} onChange={(e) => update('bride_mother', e.target.value)} />
           </div>
           <div>
-            <label className="block text-xs text-gray-400 mb-1">Foto Mempelai Wanita</label>
+            <label htmlFor="foto_mempelai_wanita" className="block text-xs text-gray-400 mb-1">Foto Mempelai Wanita</label>
             {settings.bride_photo && (
-              <img src={settings.bride_photo} alt="Bride" className="w-24 h-24 rounded-lg object-cover mb-2" />
+              <Image src={settings.bride_photo} alt="Bride" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-24 h-24 rounded-lg object-cover mb-2"  />
             )}
             <button
               type="button"
@@ -258,21 +353,21 @@ function MempelaiTab({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Hashtag</label>
-          <input className={inputClass} value={settings.hashtag} onChange={(e) => update('hashtag', e.target.value)} />
+          <label htmlFor="hashtag_8" className="block text-xs text-gray-400 mb-1">Hashtag</label>
+          <input id="hashtag_8" className={inputClass} value={settings.hashtag} onChange={(e) => update('hashtag', e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Tanggal Pernikahan</label>
-          <input type="datetime-local" className={inputClass} value={settings.wedding_date ? settings.wedding_date.slice(0, 16) : ''} onChange={(e) => update('wedding_date', e.target.value)} />
+          <label htmlFor="tanggal_pernikahan_9" className="block text-xs text-gray-400 mb-1">Tanggal Pernikahan</label>
+          <input id="tanggal_pernikahan_9" type="datetime-local" className={inputClass} value={settings.wedding_date ? settings.wedding_date.slice(0, 16) : ''} onChange={(e) => update('wedding_date', e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Teks Pembuka</label>
-          <textarea className={inputClass} rows={4} value={settings.opening_text} onChange={(e) => update('opening_text', e.target.value)} />
+          <label htmlFor="teks_pembuka_10" className="block text-xs text-gray-400 mb-1">Teks Pembuka</label>
+          <textarea id="teks_pembuka_10" className={inputClass} rows={4} value={settings.opening_text} onChange={(e) => update('opening_text', e.target.value)} />
         </div>
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Hero Image</label>
+          <label htmlFor="hero_image" className="block text-xs text-gray-400 mb-1">Hero Image</label>
           {settings.hero_image && (
-            <img src={settings.hero_image} alt="Hero" className="w-full max-w-xs h-40 rounded-lg object-cover mb-2" />
+            <Image src={settings.hero_image} alt="Hero" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-full max-w-xs h-40 rounded-lg object-cover mb-2"  />
           )}
           <button
             type="button"
@@ -284,7 +379,7 @@ function MempelaiTab({
         </div>
       </div>
 
-      <button
+      <button type="button"
         onClick={onSave}
         disabled={saving}
         className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
@@ -298,17 +393,13 @@ function MempelaiTab({
 
 // ==================== ACARA TAB ====================
 
-function AcaraTab({
+function AcaraTab({ dispatch, 
   events,
-  setEvents,
-  setMessage,
   uploadFile,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   events: Event[]
-  setEvents: React.Dispatch<React.SetStateAction<Event[]>>
-  setMessage: React.Dispatch<React.SetStateAction<string>>
   uploadFile: (file: File) => Promise<string | null>
-}) {
+ }) {
   const [editing, setEditing] = useState<Event | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
@@ -361,8 +452,8 @@ function AcaraTab({
 
   async function handleSubmit() {
     if (!form.title || !form.date || !form.location) {
-      setMessage('Error: Judul, tanggal, dan lokasi wajib diisi')
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_MESSAGE', message: 'Error: Judul, tanggal, dan lokasi wajib diisi' })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       return
     }
 
@@ -375,11 +466,11 @@ function AcaraTab({
         })
         if (res.ok) {
           const updated = await res.json()
-          setEvents((prev) => prev.map((ev) => (ev.id === editing.id ? updated : ev)))
-          setMessage('Acara berhasil diperbarui')
+          dispatch({ type: 'SET_EVENTS', events: events.map(ev => ev.id === editing.id ? updated : ev) })
+          dispatch({ type: 'SET_MESSAGE', message: 'Acara berhasil diperbarui' })
           resetForm()
         } else {
-          setMessage('Error memperbarui acara')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error memperbarui acara' })
         }
       } else {
         const res = await fetch('/api/events', {
@@ -389,32 +480,32 @@ function AcaraTab({
         })
         if (res.ok) {
           const created = await res.json()
-          setEvents((prev) => [...prev, created])
-          setMessage('Acara berhasil ditambahkan')
+          dispatch({ type: 'SET_EVENTS', events: [...events, created] })
+          dispatch({ type: 'SET_MESSAGE', message: 'Acara berhasil ditambahkan' })
           resetForm()
         } else {
-          setMessage('Error menambahkan acara')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error menambahkan acara' })
         }
       }
     } catch {
-      setMessage('Error menyimpan acara')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menyimpan acara' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`/api/events/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        setEvents((prev) => prev.filter((ev) => ev.id !== id))
-        setMessage('Acara berhasil dihapus')
+        dispatch({ type: 'SET_EVENTS', events: events.filter(ev => ev.id !== id) })
+        dispatch({ type: 'SET_MESSAGE', message: 'Acara berhasil dihapus' })
       } else {
-        setMessage('Error menghapus acara')
+        dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus acara' })
       }
     } catch {
-      setMessage('Error menghapus acara')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus acara' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   return (
@@ -422,7 +513,7 @@ function AcaraTab({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Daftar Acara</h3>
         {!showForm && (
-          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          <button type="button" onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
             + Tambah Acara
           </button>
         )}
@@ -433,45 +524,45 @@ function AcaraTab({
           <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Acara' : 'Tambah Acara'}</h3>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Judul</label>
-              <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <label htmlFor="judul_11" className="block text-xs text-gray-400 mb-1">Judul</label>
+              <input id="judul_11" className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tanggal</label>
-              <input type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <label htmlFor="tanggal_12" className="block text-xs text-gray-400 mb-1">Tanggal</label>
+              <input id="tanggal_12" type="date" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
-              <input type="time" className={inputClass} value={form.time_start} onChange={(e) => setForm({ ...form, time_start: e.target.value })} />
+              <label htmlFor="waktu_mulai_13" className="block text-xs text-gray-400 mb-1">Waktu Mulai</label>
+              <input id="waktu_mulai_13" type="time" className={inputClass} value={form.time_start} onChange={(e) => setForm({ ...form, time_start: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Waktu Selesai</label>
-              <input type="time" className={inputClass} value={form.time_end} onChange={(e) => setForm({ ...form, time_end: e.target.value })} />
+              <label htmlFor="waktu_selesai_14" className="block text-xs text-gray-400 mb-1">Waktu Selesai</label>
+              <input id="waktu_selesai_14" type="time" className={inputClass} value={form.time_end} onChange={(e) => setForm({ ...form, time_end: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Zona Waktu</label>
-              <select className={inputClass} value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
+              <label htmlFor="zona_waktu_15" className="block text-xs text-gray-400 mb-1">Zona Waktu</label>
+              <select id="zona_waktu_15" className={inputClass} value={form.timezone} onChange={(e) => setForm({ ...form, timezone: e.target.value })}>
                 <option value="WIB">WIB</option>
                 <option value="WITA">WITA</option>
                 <option value="WIT">WIT</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Lokasi</label>
-              <input className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              <label htmlFor="lokasi_16" className="block text-xs text-gray-400 mb-1">Lokasi</label>
+              <input id="lokasi_16" className={inputClass} value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Alamat</label>
-              <input className={inputClass} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              <label htmlFor="alamat_17" className="block text-xs text-gray-400 mb-1">Alamat</label>
+              <input id="alamat_17" className={inputClass} value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">URL Peta</label>
-              <input className={inputClass} value={form.map_url} onChange={(e) => setForm({ ...form, map_url: e.target.value })} />
+              <label htmlFor="url_peta_18" className="block text-xs text-gray-400 mb-1">URL Peta</label>
+              <input id="url_peta_18" className={inputClass} value={form.map_url} onChange={(e) => setForm({ ...form, map_url: e.target.value })} />
             </div>
             <div className="md:col-span-2">
-              <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+              <label htmlFor="gambar" className="block text-xs text-gray-400 mb-1">Gambar</label>
               {form.image_url && (
-                <img src={form.image_url} alt="Event" className="w-32 h-20 rounded-lg object-cover mb-2" />
+                <Image src={form.image_url} alt="Event" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-32 h-20 rounded-lg object-cover mb-2"  />
               )}
               <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
                 Upload Gambar
@@ -479,10 +570,10 @@ function AcaraTab({
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            <button type="button" onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
               {editing ? 'Perbarui' : 'Tambah'}
             </button>
-            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+            <button type="button" onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
           </div>
@@ -498,7 +589,7 @@ function AcaraTab({
             <div key={event.id} className="bg-netflix-dark rounded-xl p-4 border border-netflix-gray/20 hover:border-netflix-red/20 transition">
               <div className="flex gap-4">
                 {event.image_url && (
-                  <img src={event.image_url} alt={event.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                  <Image src={event.image_url} alt={event.title} width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                 )}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
@@ -509,8 +600,8 @@ function AcaraTab({
                   <p className="text-gray-400 text-xs mt-1 truncate">{event.location}{event.address ? ` - ${event.address}` : ''}</p>
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
-                  <button onClick={() => startEdit(event)} className="text-blue-400 text-xs hover:underline">Edit</button>
-                  <button onClick={() => handleDelete(event.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                  <button type="button" onClick={() => startEdit(event)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                  <button type="button" onClick={() => handleDelete(event.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
                 </div>
               </div>
             </div>
@@ -524,17 +615,13 @@ function AcaraTab({
 
 // ==================== LOVE STORY TAB ====================
 
-function LoveStoryTab({
+function LoveStoryTab({ dispatch, 
   loveStories,
-  setLoveStories,
-  setMessage,
   uploadFile,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   loveStories: LoveStory[]
-  setLoveStories: React.Dispatch<React.SetStateAction<LoveStory[]>>
-  setMessage: React.Dispatch<React.SetStateAction<string>>
   uploadFile: (file: File) => Promise<string | null>
-}) {
+ }) {
   const [editing, setEditing] = useState<LoveStory | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
@@ -577,8 +664,8 @@ function LoveStoryTab({
 
   async function handleSubmit() {
     if (!form.title || !form.date || !form.description) {
-      setMessage('Error: Judul, tanggal, dan deskripsi wajib diisi')
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_MESSAGE', message: 'Error: Judul, tanggal, dan deskripsi wajib diisi' })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       return
     }
 
@@ -591,11 +678,11 @@ function LoveStoryTab({
         })
         if (res.ok) {
           const updated = await res.json()
-          setLoveStories((prev) => prev.map((s) => (s.id === editing.id ? updated : s)))
-          setMessage('Love story berhasil diperbarui')
+          dispatch({ type: 'SET_LOVE_STORIES', loveStories: loveStories.map(s => s.id === editing.id ? updated : s) })
+          dispatch({ type: 'SET_MESSAGE', message: 'Love story berhasil diperbarui' })
           resetForm()
         } else {
-          setMessage('Error memperbarui love story')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error memperbarui love story' })
         }
       } else {
         const res = await fetch('/api/love-stories', {
@@ -605,32 +692,32 @@ function LoveStoryTab({
         })
         if (res.ok) {
           const created = await res.json()
-          setLoveStories((prev) => [...prev, created])
-          setMessage('Love story berhasil ditambahkan')
+          dispatch({ type: 'SET_LOVE_STORIES', loveStories: [...loveStories, created] })
+          dispatch({ type: 'SET_MESSAGE', message: 'Love story berhasil ditambahkan' })
           resetForm()
         } else {
-          setMessage('Error menambahkan love story')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error menambahkan love story' })
         }
       }
     } catch {
-      setMessage('Error menyimpan love story')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menyimpan love story' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`/api/love-stories/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        setLoveStories((prev) => prev.filter((s) => s.id !== id))
-        setMessage('Love story berhasil dihapus')
+        dispatch({ type: 'SET_LOVE_STORIES', loveStories: loveStories.filter(s => s.id !== id) })
+        dispatch({ type: 'SET_MESSAGE', message: 'Love story berhasil dihapus' })
       } else {
-        setMessage('Error menghapus love story')
+        dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus love story' })
       }
     } catch {
-      setMessage('Error menghapus love story')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus love story' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   return (
@@ -638,7 +725,7 @@ function LoveStoryTab({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Love Story</h3>
         {!showForm && (
-          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          <button type="button" onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
             + Tambah Story
           </button>
         )}
@@ -649,21 +736,21 @@ function LoveStoryTab({
           <h3 className="text-lg font-semibold text-white">{editing ? 'Edit Love Story' : 'Tambah Love Story'}</h3>
           <div className="space-y-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Judul</label>
-              <input className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
+              <label htmlFor="judul_19" className="block text-xs text-gray-400 mb-1">Judul</label>
+              <input id="judul_19" className={inputClass} value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tanggal (contoh: Januari 2020)</label>
-              <input className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
+              <label htmlFor="tanggal_contoh_januari_2020_20" className="block text-xs text-gray-400 mb-1">Tanggal (contoh: Januari 2020)</label>
+              <input id="tanggal_contoh_januari_2020_20" className={inputClass} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Deskripsi</label>
-              <textarea className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+              <label htmlFor="deskripsi_21" className="block text-xs text-gray-400 mb-1">Deskripsi</label>
+              <textarea id="deskripsi_21" className={inputClass} rows={3} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Gambar</label>
+              <label htmlFor="gambar" className="block text-xs text-gray-400 mb-1">Gambar</label>
               {form.image_url && (
-                <img src={form.image_url} alt="Love Story" className="w-32 h-20 rounded-lg object-cover mb-2" />
+                <Image src={form.image_url} alt="Love Story" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-32 h-20 rounded-lg object-cover mb-2"  />
               )}
               <button type="button" onClick={handleImageUpload} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
                 Upload Gambar
@@ -671,10 +758,10 @@ function LoveStoryTab({
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            <button type="button" onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
               {editing ? 'Perbarui' : 'Tambah'}
             </button>
-            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+            <button type="button" onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
           </div>
@@ -690,7 +777,7 @@ function LoveStoryTab({
             <div key={story.id} className="bg-netflix-dark rounded-xl p-4 border border-netflix-gray/20 hover:border-netflix-red/20 transition">
               <div className="flex gap-4">
                 {story.image_url ? (
-                  <img src={story.image_url} alt={story.title} className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
+                  <Image src={story.image_url} alt={story.title} width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-20 h-20 rounded-lg object-cover flex-shrink-0" />
                 ) : (
                   <div className="w-20 h-20 rounded-lg bg-netflix-gray/30 flex items-center justify-center flex-shrink-0">
                     <span className="text-netflix-red font-bold text-sm">EP {i + 1}</span>
@@ -705,8 +792,8 @@ function LoveStoryTab({
                   <p className="text-gray-400 text-xs mt-1 line-clamp-2">{story.description}</p>
                 </div>
                 <div className="flex flex-col gap-1 flex-shrink-0">
-                  <button onClick={() => startEdit(story)} className="text-blue-400 text-xs hover:underline">Edit</button>
-                  <button onClick={() => handleDelete(story.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                  <button type="button" onClick={() => startEdit(story)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                  <button type="button" onClick={() => handleDelete(story.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
                 </div>
               </div>
             </div>
@@ -720,19 +807,15 @@ function LoveStoryTab({
 
 // ==================== GALLERY TAB ====================
 
-function GalleryTab({
+function GalleryTab({ dispatch, 
   gallery,
-  setGallery,
-  setMessage,
   uploadFile,
   galleryInputRef,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   gallery: GalleryImage[]
-  setGallery: React.Dispatch<React.SetStateAction<GalleryImage[]>>
-  setMessage: React.Dispatch<React.SetStateAction<string>>
   uploadFile: (file: File) => Promise<string | null>
   galleryInputRef: React.RefObject<HTMLInputElement | null>
-}) {
+ }) {
   const [uploading, setUploading] = useState(false)
 
   async function handleGalleryUpload(e: React.ChangeEvent<HTMLInputElement>) {
@@ -740,35 +823,35 @@ function GalleryTab({
     if (!files || files.length === 0) return
 
     setUploading(true)
-    const uploaded: GalleryImage[] = []
 
-    for (let i = 0; i < files.length; i++) {
-      const url = await uploadFile(files[i])
-      if (url) {
+    const results = await Promise.all(
+      Array.from(files).map(async (file) => {
+        const url = await uploadFile(file)
+        if (!url) return null
         try {
           const res = await fetch('/api/gallery', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ image_url: url }),
           })
-          if (res.ok) {
-            const created = await res.json()
-            uploaded.push(created)
-          }
+          if (res.ok) return await res.json()
         } catch {
           // continue with next file
         }
-      }
-    }
+        return null
+      })
+    )
+
+    const uploaded = results.filter((r): r is GalleryImage => r !== null)
 
     if (uploaded.length > 0) {
-      setGallery((prev) => [...prev, ...uploaded])
-      setMessage(`${uploaded.length} foto berhasil diupload`)
+      dispatch({ type: 'SET_GALLERY', gallery: [...gallery, ...uploaded] })
+      dispatch({ type: 'SET_MESSAGE', message: `${uploaded.length} foto berhasil diupload` })
     } else {
-      setMessage('Upload gagal')
+      dispatch({ type: 'SET_MESSAGE', message: 'Upload gagal' })
     }
     setUploading(false)
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
 
     if (galleryInputRef.current) {
       galleryInputRef.current.value = ''
@@ -779,22 +862,22 @@ function GalleryTab({
     try {
       const res = await fetch(`/api/gallery?id=${id}`, { method: 'DELETE' })
       if (res.ok) {
-        setGallery((prev) => prev.filter((img) => img.id !== id))
-        setMessage('Foto berhasil dihapus')
+        dispatch({ type: 'SET_GALLERY', gallery: gallery.filter(img => img.id !== id) })
+        dispatch({ type: 'SET_MESSAGE', message: 'Foto berhasil dihapus' })
       } else {
-        setMessage('Error menghapus foto')
+        dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus foto' })
       }
     } catch {
-      setMessage('Error menghapus foto')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus foto' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   return (
     <div className="space-y-6">
       <div className="bg-netflix-dark rounded-xl p-6">
         <h3 className="text-lg font-semibold text-white mb-4">Upload Foto</h3>
-        <input
+        <input aria-label="field"
           ref={galleryInputRef}
           type="file"
           multiple
@@ -802,7 +885,7 @@ function GalleryTab({
           onChange={handleGalleryUpload}
           className="hidden"
         />
-        <button
+        <button type="button"
           onClick={() => galleryInputRef.current?.click()}
           disabled={uploading}
           className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
@@ -819,8 +902,8 @@ function GalleryTab({
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {gallery.map((img) => (
               <div key={img.id} className="relative group">
-                <img src={img.image_url} alt="Gallery" className="w-full h-32 rounded-lg object-cover" />
-                <button
+                <Image src={img.image_url} alt="Gallery" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-full h-32 rounded-lg object-cover"  />
+                <button type="button"
                   onClick={() => handleDelete(img.id)}
                   className="absolute top-2 right-2 bg-red-600 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition"
                 >
@@ -838,15 +921,11 @@ function GalleryTab({
 
 // ==================== AMPLOP TAB ====================
 
-function AmplopTab({
+function AmplopTab({ dispatch, 
   giftAccounts,
-  setGiftAccounts,
-  setMessage,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   giftAccounts: GiftAccount[]
-  setGiftAccounts: React.Dispatch<React.SetStateAction<GiftAccount[]>>
-  setMessage: React.Dispatch<React.SetStateAction<string>>
-}) {
+ }) {
   const [editing, setEditing] = useState<GiftAccount | null>(null)
   const [showForm, setShowForm] = useState(false)
   const [form, setForm] = useState({
@@ -856,23 +935,6 @@ function AmplopTab({
     account_holder: '',
   })
 
-  function getProviderLogo(name: string, type: string) {
-    const n = name.toLowerCase()
-    // Return color and abbreviation for inline logo
-    if (n.includes('bca')) return { color: 'bg-blue-800', text: 'BCA' }
-    if (n.includes('bni')) return { color: 'bg-orange-600', text: 'BNI' }
-    if (n.includes('bri')) return { color: 'bg-blue-700', text: 'BRI' }
-    if (n.includes('mandiri')) return { color: 'bg-blue-900', text: 'MDR' }
-    if (n.includes('bsi')) return { color: 'bg-teal-700', text: 'BSI' }
-    if (n.includes('cimb')) return { color: 'bg-red-800', text: 'CIMB' }
-    if (n.includes('dana')) return { color: 'bg-blue-500', text: 'DANA' }
-    if (n.includes('gopay') || n.includes('go-pay')) return { color: 'bg-green-600', text: 'GP' }
-    if (n.includes('ovo')) return { color: 'bg-purple-700', text: 'OVO' }
-    if (n.includes('shopeepay') || n.includes('shopee')) return { color: 'bg-orange-500', text: 'SPay' }
-    if (n.includes('linkaja') || n.includes('link aja')) return { color: 'bg-red-600', text: 'LA' }
-    if (type === 'ewallet') return { color: 'bg-green-700', text: name.slice(0, 2).toUpperCase() }
-    return { color: 'bg-gray-600', text: name.slice(0, 3).toUpperCase() }
-  }
 
   function resetForm() {
     setForm({ type: 'bank', provider_name: '', account_number: '', account_holder: '' })
@@ -893,8 +955,8 @@ function AmplopTab({
 
   async function handleSubmit() {
     if (!form.provider_name || !form.account_number || !form.account_holder) {
-      setMessage('Error: Semua field wajib diisi')
-      setTimeout(() => setMessage(''), 5000)
+      dispatch({ type: 'SET_MESSAGE', message: 'Error: Semua field wajib diisi' })
+      setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
       return
     }
 
@@ -907,11 +969,11 @@ function AmplopTab({
         })
         if (res.ok) {
           const updated = await res.json()
-          setGiftAccounts((prev) => prev.map((a) => (a.id === editing.id ? updated : a)))
-          setMessage('Rekening berhasil diperbarui')
+          dispatch({ type: 'SET_GIFT_ACCOUNTS', giftAccounts: giftAccounts.map(a => a.id === editing.id ? updated : a) })
+          dispatch({ type: 'SET_MESSAGE', message: 'Rekening berhasil diperbarui' })
           resetForm()
         } else {
-          setMessage('Error memperbarui rekening')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error memperbarui rekening' })
         }
       } else {
         const res = await fetch('/api/gift-accounts', {
@@ -921,32 +983,32 @@ function AmplopTab({
         })
         if (res.ok) {
           const created = await res.json()
-          setGiftAccounts((prev) => [...prev, created])
-          setMessage('Rekening berhasil ditambahkan')
+          dispatch({ type: 'SET_GIFT_ACCOUNTS', giftAccounts: [...giftAccounts, created] })
+          dispatch({ type: 'SET_MESSAGE', message: 'Rekening berhasil ditambahkan' })
           resetForm()
         } else {
-          setMessage('Error menambahkan rekening')
+          dispatch({ type: 'SET_MESSAGE', message: 'Error menambahkan rekening' })
         }
       }
     } catch {
-      setMessage('Error menyimpan rekening')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menyimpan rekening' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   async function handleDelete(id: string) {
     try {
       const res = await fetch(`/api/gift-accounts/${id}`, { method: 'DELETE' })
       if (res.ok) {
-        setGiftAccounts((prev) => prev.filter((a) => a.id !== id))
-        setMessage('Rekening berhasil dihapus')
+        dispatch({ type: 'SET_GIFT_ACCOUNTS', giftAccounts: giftAccounts.filter(a => a.id !== id) })
+        dispatch({ type: 'SET_MESSAGE', message: 'Rekening berhasil dihapus' })
       } else {
-        setMessage('Error menghapus rekening')
+        dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus rekening' })
       }
     } catch {
-      setMessage('Error menghapus rekening')
+      dispatch({ type: 'SET_MESSAGE', message: 'Error menghapus rekening' })
     }
-    setTimeout(() => setMessage(''), 5000)
+    setTimeout(() => dispatch({ type: 'SET_MESSAGE', message: '' }), 5000)
   }
 
   return (
@@ -954,7 +1016,7 @@ function AmplopTab({
       <div className="flex items-center justify-between">
         <h3 className="text-lg font-semibold text-white">Amplop Digital</h3>
         {!showForm && (
-          <button onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
+          <button type="button" onClick={() => { resetForm(); setShowForm(true) }} className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition">
             + Tambah Rekening
           </button>
         )}
@@ -965,30 +1027,30 @@ function AmplopTab({
           <h4 className="text-md font-semibold text-white">{editing ? 'Edit Rekening' : 'Tambah Rekening Baru'}</h4>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Tipe</label>
-              <select className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'bank' | 'ewallet' })}>
+              <label htmlFor="tipe_22" className="block text-xs text-gray-400 mb-1">Tipe</label>
+              <select id="tipe_22" className={inputClass} value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'bank' | 'ewallet' })}>
                 <option value="bank">Bank</option>
                 <option value="ewallet">E-Wallet</option>
               </select>
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Nama Provider</label>
-              <input className={inputClass} placeholder="BCA, BNI, BSI, Dana, GoPay, dll" value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} />
+              <label htmlFor="nama_provider_23" className="block text-xs text-gray-400 mb-1">Nama Provider</label>
+              <input id="nama_provider_23" className={inputClass} placeholder="BCA, BNI, BSI, Dana, GoPay, dll" value={form.provider_name} onChange={(e) => setForm({ ...form, provider_name: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Nomor Rekening / Nomor HP</label>
-              <input className={inputClass} value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
+              <label htmlFor="nomor_rekening_nomor_hp_24" className="block text-xs text-gray-400 mb-1">Nomor Rekening / Nomor HP</label>
+              <input id="nomor_rekening_nomor_hp_24" className={inputClass} value={form.account_number} onChange={(e) => setForm({ ...form, account_number: e.target.value })} />
             </div>
             <div>
-              <label className="block text-xs text-gray-400 mb-1">Atas Nama</label>
-              <input className={inputClass} value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} />
+              <label htmlFor="atas_nama_25" className="block text-xs text-gray-400 mb-1">Atas Nama</label>
+              <input id="atas_nama_25" className={inputClass} value={form.account_holder} onChange={(e) => setForm({ ...form, account_holder: e.target.value })} />
             </div>
           </div>
           <div className="flex gap-2">
-            <button onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
+            <button type="button" onClick={handleSubmit} className="bg-netflix-red text-white px-6 py-2 rounded-lg hover:bg-red-700 transition">
               {editing ? 'Perbarui' : 'Tambah'}
             </button>
-            <button onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
+            <button type="button" onClick={resetForm} className="bg-gray-700 text-white px-6 py-2 rounded-lg hover:bg-gray-600 transition">
               Batal
             </button>
           </div>
@@ -1022,8 +1084,8 @@ function AmplopTab({
                   </div>
                   {/* Actions */}
                   <div className="flex flex-col gap-1 flex-shrink-0">
-                    <button onClick={() => startEdit(account)} className="text-blue-400 text-xs hover:underline">Edit</button>
-                    <button onClick={() => handleDelete(account.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
+                    <button type="button" onClick={() => startEdit(account)} className="text-blue-400 text-xs hover:underline">Edit</button>
+                    <button type="button" onClick={() => handleDelete(account.id)} className="text-red-400 text-xs hover:underline">Hapus</button>
                   </div>
                 </div>
               </div>
@@ -1037,19 +1099,17 @@ function AmplopTab({
 
 // ==================== OG TAB (Social Media Preview) ====================
 
-function OgTab({
+function OgTab({ dispatch, 
   settings,
-  setSettings,
   saving,
   onSave,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   settings: Settings
-  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
   saving: boolean
   onSave: () => void
-}) {
+ }) {
   function update(field: keyof Settings, value: string) {
-    setSettings((prev) => (prev ? { ...prev, [field]: value } : prev))
+    dispatch({ type: 'SET_SETTINGS', settings: settings ? { ...settings, [field]: value } : settings })
   }
 
   function handleImageUpload() {
@@ -1099,9 +1159,8 @@ function OgTab({
       <div className="bg-netflix-black rounded-xl overflow-hidden border border-gray-700">
         <div className="w-full aspect-[1200/630] relative bg-gray-800">
           {ogImage && (
-            <img
-              src={ogImage}
-              alt="OG Preview"
+            <Image src={ogImage}
+              alt="OG Preview" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw"
               className="w-full h-full object-cover"
               onError={(e) => {
                 (e.target as HTMLImageElement).style.display = 'none'
@@ -1125,9 +1184,9 @@ function OgTab({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs text-gray-400 mb-1">OG Image (1200x630 px — ideal)</label>
+          <label htmlFor="og_image" className="block text-xs text-gray-400 mb-1">OG Image (1200x630 px — ideal)</label>
           {settings.og_image && (
-            <img src={settings.og_image} alt="OG Image" className="w-full max-w-sm h-32 rounded-lg object-cover mb-2" />
+            <Image src={settings.og_image} alt="OG" width={400} height={300} sizes="(max-width: 768px) 100vw, 50vw" className="w-full max-w-sm h-32 rounded-lg object-cover mb-2"  />
           )}
           <button
             type="button"
@@ -1146,8 +1205,8 @@ function OgTab({
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">OG Title</label>
-          <input
+          <label htmlFor="og_title_26" className="block text-xs text-gray-400 mb-1">OG Title</label>
+          <input id="og_title_26"
             className={inputClass}
             value={settings.og_title || ''}
             onChange={(e) => update('og_title', e.target.value)}
@@ -1157,8 +1216,8 @@ function OgTab({
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">OG Description</label>
-          <textarea
+          <label htmlFor="og_description_27" className="block text-xs text-gray-400 mb-1">OG Description</label>
+          <textarea id="og_description_27"
             className={inputClass}
             rows={3}
             value={settings.og_description || ''}
@@ -1169,7 +1228,7 @@ function OgTab({
         </div>
       </div>
 
-      <button
+      <button type="button"
         onClick={onSave}
         disabled={saving}
         className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
@@ -1183,17 +1242,15 @@ function OgTab({
 
 // ==================== MEDIA TAB ====================
 
-function MediaTab({
+function MediaTab({ dispatch, 
   settings,
-  setSettings,
   saving,
   onSave,
-}: {
+ }: { dispatch: React.Dispatch<SettingsAction>; 
   settings: Settings
-  setSettings: React.Dispatch<React.SetStateAction<Settings | null>>
   saving: boolean
   onSave: () => void
-}) {
+ }) {
   const [uploading, setUploading] = useState(false)
 
   async function handleMusicUpload() {
@@ -1212,7 +1269,7 @@ function MediaTab({
         const res = await fetch('/api/upload', { method: 'POST', body: formData })
         const data = await res.json()
         if (res.ok && data.url) {
-          setSettings((prev) => (prev ? { ...prev, music_url: data.url } : prev))
+          dispatch({ type: 'SET_SETTINGS', settings: settings ? { ...settings, music_url: data.url } : settings })
           // Auto save after upload
           setTimeout(() => onSave(), 500)
         } else {
@@ -1233,8 +1290,8 @@ function MediaTab({
 
       <div className="space-y-4">
         <div>
-          <label className="block text-xs text-gray-400 mb-2">Upload File Musik (MP3)</label>
-          <button
+          <label htmlFor="upload_file_musik" className="block text-xs text-gray-400 mb-2">Upload File Musik (MP3)</label>
+          <button type="button"
             onClick={handleMusicUpload}
             disabled={uploading}
             className="bg-netflix-red text-white text-sm px-4 py-2 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
@@ -1244,11 +1301,11 @@ function MediaTab({
         </div>
 
         <div>
-          <label className="block text-xs text-gray-400 mb-1">Atau masukkan URL langsung</label>
-          <input
+          <label htmlFor="atau_masukkan_url_langsung_28" className="block text-xs text-gray-400 mb-1">Atau masukkan URL langsung</label>
+          <input id="atau_masukkan_url_langsung_28"
             className={inputClass}
             value={settings.music_url || ''}
-            onChange={(e) => setSettings((prev) => (prev ? { ...prev, music_url: e.target.value } : prev))}
+            onChange={(e) => dispatch({ type: 'SET_SETTINGS', settings: settings ? { ...settings, music_url: e.target.value } : settings })}
             placeholder="https://example.com/music.mp3"
           />
         </div>
@@ -1256,7 +1313,7 @@ function MediaTab({
         {settings.music_url && (
           <div className="bg-netflix-black rounded-lg p-4">
             <p className="text-xs text-gray-400 mb-2">Preview:</p>
-            <audio controls className="w-full" src={settings.music_url}>
+            <audio controls className="w-full" src={settings.music_url}><track kind="captions" />
               Browser tidak mendukung audio.
             </audio>
           </div>
@@ -1268,7 +1325,7 @@ function MediaTab({
         <h4 className="text-md font-semibold text-white">Audio Intro (Netflix Sound)</h4>
         <p className="text-xs text-gray-400">Audio yang diputar saat tamu klik Buka Undangan (seperti suara Netflix ta-dum)</p>
         <div className="flex gap-3">
-          <button
+          <button type="button"
             onClick={() => {
               const input = document.createElement('input')
               input.type = 'file'
@@ -1285,7 +1342,7 @@ function MediaTab({
                   const res = await fetch('/api/upload', { method: 'POST', body: formData })
                   const data = await res.json()
                   if (res.ok && data.url) {
-                    setSettings((prev) => (prev ? { ...prev, intro_sound_url: data.url } : prev))
+                    dispatch({ type: 'SET_SETTINGS', settings: settings ? { ...settings, intro_sound_url: data.url } : settings })
                     setTimeout(() => onSave(), 500)
                   } else {
                     alert(data.error || 'Upload gagal')
@@ -1307,14 +1364,14 @@ function MediaTab({
         {settings.intro_sound_url && (
           <div className="bg-netflix-black rounded-lg p-4">
             <p className="text-xs text-gray-400 mb-2">Preview Intro Sound:</p>
-            <audio controls className="w-full" src={settings.intro_sound_url}>
+            <audio controls className="w-full" src={settings.intro_sound_url}><track kind="captions" />
               Browser tidak mendukung audio.
             </audio>
           </div>
         )}
       </div>
 
-      <button
+      <button type="button"
         onClick={onSave}
         disabled={saving}
         className="bg-netflix-red text-white px-6 py-3 rounded-lg hover:bg-red-700 transition disabled:opacity-50"

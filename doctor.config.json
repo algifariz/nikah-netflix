@@ -1,0 +1,25 @@
+{
+  "$schema": "https://react.doctor/schema/config.json",
+  "ignore": {
+    "rules": [
+      "react-doctor/rendering-hydration-mismatch-time",
+      "react-doctor/no-fetch-in-effect",
+      "react-doctor/no-initialize-state",
+      "deslop/unused-dev-dependency"
+    ],
+    "overrides": [
+      {
+        "files": ["components/invitation/OpeningSection.tsx"],
+        "rules": ["react-doctor/no-array-index-as-key"]
+      },
+      {
+        "files": ["components/invitation/QRSection.tsx"],
+        "rules": ["react-doctor/no-derived-state"]
+      },
+      {
+        "files": ["components/admin/QRScannerModal.tsx"],
+        "rules": ["react-doctor/rerender-state-only-in-handlers"]
+      }
+    ]
+  }
+}
